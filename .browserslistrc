@@ -1,0 +1,10 @@
+> 0.5% in alt-eu
+last 2 versions
+firefox ESR
+firefox >= 65
+chrome >= 72
+ios_saf >= 10
+not IE >= 11
+not dead
+not ie_mob <= 11
+not op_mini all
