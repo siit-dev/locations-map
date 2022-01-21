@@ -1,5 +1,13 @@
 $primary: black;
 
+locations-map-container,
+locations-map-header,
+locations-map-popup,
+locations-map-list,
+locations-map-target {
+  display: block;
+}
+
 locations-map-target {
   flex: 1 0 auto;
   width: 100%;
