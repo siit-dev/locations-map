@@ -45,8 +45,7 @@
     "test-locally": "local-package-publisher -p"
   },
   "publishConfig": {
-    "access": "public",
-    "registry": "https://npm.pkg.github.com/"
+    "access": "public"
   },
   "directories": {
     "lib": "dist"
