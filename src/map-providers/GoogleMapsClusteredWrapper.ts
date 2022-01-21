@@ -25,8 +25,6 @@ export default class GoogleMapsClusteredWrapper
   addMapMarkers(markers: MapMarkerInterface[]): this {
     this.mapMarkers = markers.map(marker => this.createMapMarker(marker, true));
 
-    console.log(this.settings);
-
     // Add a marker clusterer to manage the markers.
     this.clusterer = new MarkerClusterer(this.map, this.mapMarkers, {
       ignoreHidden: true,

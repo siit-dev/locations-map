@@ -14,6 +14,7 @@ const makeConfig = () => {
   const config = {
     entry: {
       index: ['./src/index'],
+      app: ['./src/scss/app.scss'],
     },
     output: {
       path: path.resolve(__dirname, '../dist/umd'),

@@ -13,7 +13,7 @@ import autoComplete from '@tarekraafat/autocomplete.js';
 import List from 'list.js';
 
 import '@tarekraafat/autocomplete.js/dist/css/autoComplete.css';
-import './scss/app.scss';
+// import './scss/app.scss';
 
 /**
  * the class to handle the location map
