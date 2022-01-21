@@ -1,11 +1,7 @@
 import $ from 'jquery';
-import {
-  AutocompleteResult,
-  SearchProvider,
-  SearchResult,
-} from '../interfaces';
+import { AutocompleteResult, SearchProvider, SearchResult } from '../interfaces';
 
-export class NominatimProvider implements SearchProvider {
+export default class NominatimProvider implements SearchProvider {
   results: SearchResult[] = [];
 
   _callAPI = (url: string): Promise<SearchResult[]> => {

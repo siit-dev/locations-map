@@ -1,25 +1,25 @@
-import { distance } from './utils';
-import GoogleMapsWrapper from './GoogleMapsWrapper';
-import MapsWrapperInterface, { MapMarkerInterface } from './MapsWrapperInterface';
+import { distance } from './utils/locations-utils';
+import MapsWrapperInterface, {
+  MapMarkerInterface,
+} from './map-providers/MapsWrapperInterface';
 import {
   SearchProvider,
   SearchResult,
-  StoreContainerSettings,
-  StoreData,
+  LocationContainerSettings,
+  LocationData,
 } from './interfaces';
-import LeafletMapWrapper from './LeafletMapWrapper';
-import { NominatimProvider } from './search/NominatimProvider';
-import { GoogleMapsGeocoderProvider } from './search/GoogleMapsGeocoderProvider';
 import { Position } from './interfaces';
-import '@tarekraafat/autocomplete.js/dist/css/autoComplete.css';
 import autoComplete from '@tarekraafat/autocomplete.js';
 import List from 'list.js';
 
+import '@tarekraafat/autocomplete.js/dist/css/autoComplete.css';
+import './scss/app.scss';
+
 /**
- * the class to handle the store map
+ * the class to handle the location map
  */
-export default class StoresMap {
-  protected settings: StoreContainerSettings;
+export default class LocationsMap {
+  protected settings: LocationContainerSettings;
   protected displaySearch = true;
 
   protected geolocalized = false;
@@ -27,30 +27,30 @@ export default class StoresMap {
   protected longitude: number;
   protected zoom: number;
 
-  stores: StoreData[] = [];
-  filteredStores: StoreData[] = [];
+  locations: LocationData[] = [];
+  filteredLocations: LocationData[] = [];
   filters = [];
 
   protected mapWrapper: MapsWrapperInterface;
-  protected searchProvider: SearchProvider;
+  protected searchProvider: SearchProvider | null;
   autocomplete: any;
   protected paginationList: List;
 
   protected uiContainer: HTMLElement;
-  protected storeList: HTMLElement;
+  protected locationList: HTMLElement;
   protected searchForm?: HTMLFormElement;
   protected searchInput?: HTMLInputElement;
   protected popupContainers?: HTMLElement[];
 
   selectedMarker?: MapMarkerInterface;
-  hoveredStore?: StoreData = null;
+  hoveredLocation?: LocationData = null;
 
-  constructor(element = null, extraSettings: StoreContainerSettings | {} = {}) {
-    this.uiContainer = element || document.querySelector('stores-map-container');
-    this.storeList = this.uiContainer.querySelector('stores-map-list');
-    this.searchForm = this.uiContainer.querySelector('[data-store-search]');
+  constructor(element = null, extraSettings: LocationContainerSettings | {} = {}) {
+    this.uiContainer = element || document.querySelector('locations-map-container');
+    this.locationList = this.uiContainer.querySelector('locations-map-list');
+    this.searchForm = this.uiContainer.querySelector('[data-location-search]');
     this.popupContainers = [
-      ...this.uiContainer.querySelectorAll('stores-map-popup'),
+      ...this.uiContainer.querySelectorAll('locations-map-popup'),
     ] as HTMLElement[];
     this.searchInput = this.searchForm.querySelector(
       'input[type="search"]'
@@ -58,61 +58,65 @@ export default class StoresMap {
 
     this.settings = JSON.parse(
       this.uiContainer.dataset.settings
-    ) as StoreContainerSettings;
+    ) as LocationContainerSettings;
     this.settings = { ...this.settings, ...extraSettings };
     const {
       latitude,
       longitude,
       zoom = 8,
-      stores = [],
+      locations = [],
       displaySearch = true,
       filters = [],
+      searchProvider = null,
+      mapProvider = null,
     } = this.settings;
 
     this.latitude = latitude;
     this.longitude = longitude;
-    this.displaySearch = displaySearch;
+    this.displaySearch = displaySearch && !!this.searchProvider;
+    this.searchProvider = searchProvider;
     this.zoom = zoom;
     this.filters = filters;
+    this.mapWrapper = mapProvider;
 
-    this.stores = this.parseStores(stores);
-    (this.uiContainer as any).storesMap = this;
+    this.locations = this.parseLocations(locations);
+    (this.uiContainer as any).locationsMap = this;
 
     this.init();
   }
 
   /**
-   * parse the stores and fix their latitude/longitude
+   * parse the locations and fix their latitude/longitude
    */
-  protected parseStores(stores: StoreData[]): StoreData[] {
-    stores = stores.map(store => {
-      store = {
-        ...store,
-        hours: store.hours ? JSON.parse(store.hours.toString()) : [],
-        latitude: parseFloat(store.latitude.toString()),
-        longitude: parseFloat(store.longitude.toString()),
+  protected parseLocations(locations: LocationData[]): LocationData[] {
+    locations = locations.map(location => {
+      location = {
+        ...location,
+        hours: location.hours ? JSON.parse(location.hours.toString()) : [],
+        latitude: parseFloat(location.latitude.toString()),
+        longitude: parseFloat(location.longitude.toString()),
       };
 
-      // try to fix when stores overlap
+      // try to fix when locations overlap
       const threshold = 0.00001;
-      const overlappingStore = store.latitude
-        ? stores.find(
+      const overlappingLocation = location.latitude
+        ? locations.find(
             item =>
-              Math.abs(item.latitude - store.latitude) < threshold &&
-              Math.abs(item.longitude - store.longitude) < threshold &&
-              item.id < store.id
+              Math.abs(item.latitude - location.latitude) < threshold &&
+              Math.abs(item.longitude - location.longitude) < threshold &&
+              item.id < location.id
           )
         : false;
-      if (overlappingStore) {
-        store.latitude +=
-          threshold * (overlappingStore.latitude > store.latitude ? -1 : 1);
-        console.log('fixing store overlap', store, overlappingStore);
+      if (overlappingLocation) {
+        location.latitude +=
+          threshold * (overlappingLocation.latitude > location.latitude ? -1 : 1);
+        // console.log('fixing location overlap', location, overlappingLocation);
       }
 
-      return store;
+      return location;
     });
 
-    return stores;
+    return locations;
   }
 
   /**
@@ -121,23 +125,23 @@ export default class StoresMap {
   setFilters(filters: string[]): this {
     this.applyFilters(filters);
     if (this.displaySearch) {
-      this.updateStoresListContent();
+      this.updateLocationsListContent();
     }
     this.closePopups();
     return this;
   }
 
   /**
-   * update the stores (maybe when setting favourites)
+   * update the locations (maybe when setting favourites)
    */
-  updateStores(callback: (stores: StoreData[]) => StoreData[]): this {
-    this.stores = callback(this.stores);
+  updateLocations(callback: (locations: LocationData[]) => LocationData[]): this {
+    this.locations = callback(this.locations);
     this.updateContent(true);
     return this;
   }
 
   /**
-   * close the store popups
+   * close the location popups
    */
   closePopups(): this {
     this.selectedMarker = null;
@@ -146,7 +150,7 @@ export default class StoresMap {
     this.popupContainers.forEach(container => {
       container.innerHTML = '';
     });
-    [...this.storeList.querySelectorAll('.store-wrapper.in-focus')].forEach(item =>
+    [...this.locationList.querySelectorAll('.location-wrapper.in-focus')].forEach(item =>
       item.classList.remove('in-focus')
     );
     return this;
@@ -158,28 +162,22 @@ export default class StoresMap {
   protected init = async () => {
     await this.initMap();
     this.updateContent();
-
-    if (this.displaySearch) {
-      this.searchProvider = this.settings.useGoogleMapsGeocoder
-        ? new GoogleMapsGeocoderProvider()
-        : new NominatimProvider();
-    }
   };
 
   /**
-   * update the HTML for the stores list
+   * update the HTML for the locations list
    */
-  updateStoresListContent = (): this => {
+  updateLocationsListContent = (): this => {
     let html = '';
-    html += this.generateResultsCount(this.filteredStores.length);
-    html += '<ul class="list stores-list-inner">';
-    this.filteredStores.forEach(store => {
-      html += `<li>${this.generateStoreHTML(store)}</li>`;
+    html += this.generateResultsCount(this.filteredLocations.length);
+    html += '<ul class="list locations-list-inner">';
+    this.filteredLocations.forEach(location => {
+      html += `<li>${this.generateLocationHTML(location)}</li>`;
     });
     html += '</ul>';
     html += '<ul class="pagination"></ul>';
-    this.storeList.innerHTML = html;
-    this.storeList.id = 'stores-list';
+    this.locationList.innerHTML = html;
+    this.locationList.id = 'locations-list';
 
     // initialize the pagination
     const paginationSettings = this.settings.paginationSettings || {};
@@ -196,11 +194,11 @@ export default class StoresMap {
     if (this.paginationList) {
       this.paginationList.clear();
     }
-    if (this.filteredStores.length > settings.page) {
-      this.paginationList = new List(this.storeList, settings);
+    if (this.filteredLocations.length > settings.page) {
+      this.paginationList = new List(this.locationList, settings);
     }
 
-    this.dispatchEvent('updatedStoreListContent');
+    this.dispatchEvent('updatedLocationListContent');
     return this;
   };
 
@@ -216,14 +214,14 @@ export default class StoresMap {
       html = template.innerHTML.replace('{{ results }}', count.toString());
     }
     const detail = { html, count, template };
-    this.dispatchEvent('updatedStoreListContent', { detail });
+    this.dispatchEvent('updatedLocationListContent', { detail });
     return detail.html;
   };
 
   /**
-   * replace placeholders with store data inside html templates
+   * replace placeholders with location data inside html templates
    */
-  protected replaceHTMLPlaceholders = (html: string, location: StoreData): string => {
+  protected replaceHTMLPlaceholders = (html: string, location: LocationData): string => {
     for (let key in location) {
       let value = location[key];
       if (key == 'distance') {
@@ -244,13 +242,13 @@ export default class StoresMap {
   };
 
   /**
-   * generate the HTML for a store in the stores list
+   * generate the HTML for a location in the locations list
    */
-  protected generateStoreHTML = (location: StoreData): string => {
+  protected generateLocationHTML = (location: LocationData): string => {
     // find the template
-    const defaultSelector = `template.template-store:not([data-store-type])`;
+    const defaultSelector = `template.template-location:not([data-location-type])`;
     const selector = location.type
-      ? `template.template-store[data-store-type="${location.type}"]`
+      ? `template.template-location[data-location-type="${location.type}"]`
       : defaultSelector;
     const template =
       document.querySelector(selector) || document.querySelector(defaultSelector);
@@ -259,12 +257,12 @@ export default class StoresMap {
     if (template) {
       const innerHtml = this.replaceHTMLPlaceholders(template.innerHTML, location);
       const isSelected =
-        this.selectedMarker && this.selectedMarker.store.id == location.id;
-      const html = `<div class="store-wrapper store-item-wrapper${
+        this.selectedMarker && this.selectedMarker.location.id == location.id;
+      const html = `<div class="location-wrapper location-item-wrapper${
         isSelected ? ' in-focus' : ''
       }" data-property="${location.id}" data-type="${location.type}">${innerHtml}</div>`;
       const detail = { html, innerHtml, isSelected, location };
-      this.dispatchEvent('generateStoreHTML', { detail });
+      this.dispatchEvent('generateLocationHTML', { detail });
       return detail.html;
     }
 
@@ -272,13 +270,13 @@ export default class StoresMap {
   };
 
   /**
-   * generate the HTML for a store popup
+   * generate the HTML for a location popup
    */
-  protected generateStorePopupHTML = (location: StoreData): string => {
+  protected generateLocationPopupHTML = (location: LocationData): string => {
     // find the template
-    const defaultSelector = `template.template-popup-store:not([data-store-type])`;
+    const defaultSelector = `template.template-popup-location:not([data-location-type])`;
     const selector = location.type
-      ? `template.template-popup-store[data-store-type="${location.type}"]`
+      ? `template.template-popup-location[data-location-type="${location.type}"]`
       : defaultSelector;
     const template =
       document.querySelector(selector) || document.querySelector(defaultSelector);
@@ -286,9 +284,9 @@ export default class StoresMap {
     // replace placeholders
     if (template) {
       const innerHtml = this.replaceHTMLPlaceholders(template.innerHTML, location);
-      const html = `<div class="store-wrapper store-popup-wrapper" data-property="${location.id}" data-type="${location.type}">${innerHtml}</div>`;
+      const html = `<div class="location-wrapper location-popup-wrapper" data-property="${location.id}" data-type="${location.type}">${innerHtml}</div>`;
       const detail = { html, innerHtml, location };
-      this.dispatchEvent('generateStorePopupHTML', { detail });
+      this.dispatchEvent('generateLocationPopupHTML', { detail });
       return detail.html;
     }
 
@@ -296,16 +294,16 @@ export default class StoresMap {
   };
 
   /**
-   * update the stores info (distance) after the GPS location is updated
+   * update the locations info (distance) after the GPS location is updated
    */
-  updateStoresDistanceAndStatus = (): void => {
-    this.stores = this.stores
-      .map(store => {
+  updateLocationsDistanceAndStatus = (): void => {
+    this.locations = this.locations
+      .map(location => {
         return {
-          ...store,
+          ...location,
           distance: distance(
-            store.latitude,
-            store.longitude,
+            location.latitude,
+            location.longitude,
             this.latitude,
             this.longitude,
             'K'
@@ -314,9 +312,9 @@ export default class StoresMap {
       })
       .sort((a, b) => a.distance - b.distance);
 
-    this.dispatchEvent('updatedStores', {
+    this.dispatchEvent('updatedLocations', {
       detail: {
-        stores: this.stores,
+        locations: this.locations,
       },
     });
   };
@@ -325,11 +323,13 @@ export default class StoresMap {
     if (filters !== null) {
       this.filters = filters;
     }
-    this.filteredStores = this.stores.filter(store => {
-      return !this.filters.length || this.filters.includes(store.type);
+    this.filteredLocations = this.locations.filter(location => {
+      return !this.filters.length || this.filters.includes(location.type);
     });
     this.mapWrapper?.filterMarkers(marker => {
-      return !!this.filteredStores.find(store => marker.store?.id == store.id);
+      return !!this.filteredLocations.find(
+        location => marker.location?.id == location.id
+      );
     });
     this.dispatchEvent('appliedFilters', {
       detail: {
@@ -347,11 +347,9 @@ export default class StoresMap {
   updateContent = (keepPopupsOpen: boolean = true): this => {
     this.dispatchEvent('updatingContent', { detail: { keepPopupsOpen } });
 
-    this.updateStoresDistanceAndStatus();
+    this.updateLocationsDistanceAndStatus();
     this.applyFilters();
-    if (this.displaySearch) {
-      this.updateStoresListContent();
-    }
+    this.updateLocationsListContent();
 
     if (keepPopupsOpen) {
       if (this.selectedMarker) {
@@ -372,13 +370,13 @@ export default class StoresMap {
     element: HTMLElement = null
   ): boolean => {
     return (element || this.uiContainer).dispatchEvent(
-      new CustomEvent(`${type}.storesMap`, {
+      new CustomEvent(`${type}.locationsMap`, {
         bubbles: true,
         cancelable: true,
         ...options,
         detail: {
           ...(options.detail || {}),
-          storesMap: this,
+          locationsMap: this,
         },
       })
     );
@@ -394,23 +392,15 @@ export default class StoresMap {
       },
     });
 
-    if (this.settings.useGoogleMaps) {
-      this.mapWrapper = new GoogleMapsWrapper(this);
-    } else {
-      this.mapWrapper = new LeafletMapWrapper(this);
-    }
+    this.mapWrapper.setParent(this);
 
-    const mapTarget = this.uiContainer.querySelector('stores-map-target');
-    mapTarget.id = mapTarget.id || 'stores-map-target';
+    const mapTarget = this.uiContainer.querySelector('locations-map-target');
+    mapTarget.id = mapTarget.id || 'locations-map-target';
 
     await this.mapWrapper.initializeMap(mapTarget.id, {
       latitude: this.latitude,
       longitude: this.longitude,
       zoom: this.zoom,
-      clusters: this.settings.clusters,
-      clusterSettings: this.settings.clusterSettings,
-      apiKey: this.settings.apiKey,
-      googleMapsSettings: this.settings.googleMapsSettings || {},
       icon: this.settings.icon,
     });
 
@@ -442,11 +432,11 @@ export default class StoresMap {
    * create the map markers and the clusterer
    */
   protected createMapMarkers = () => {
-    const markers = this.stores.map(store => {
+    const markers = this.locations.map(location => {
       return {
-        latitude: store.latitude as number,
-        longitude: store.longitude as number,
-        store,
+        latitude: location.latitude as number,
+        longitude: location.longitude as number,
+        location,
       };
     });
     return this.mapWrapper.addMapMarkers(markers);
@@ -512,18 +502,18 @@ export default class StoresMap {
       button.addEventListener('click', this.geolocate)
     );
 
-    // pan to store when clicking on the list
-    this.storeList.addEventListener('click', this.onListedStoreClick);
+    // pan to location when clicking on the list
+    this.locationList.addEventListener('click', this.onListedLocationClick);
 
-    // pan to store when hovering on a store
-    this.storeList.addEventListener('mouseenter', this.onListedStoreHover, true);
-    this.storeList.addEventListener('mouseleave', this.onListedStoreHoverOut, true);
+    // pan to location when hovering on a location
+    this.locationList.addEventListener('mouseenter', this.onListedLocationHover, true);
+    this.locationList.addEventListener('mouseleave', this.onListedLocationHoverOut, true);
 
     // listen to marker clicks
     this.mapWrapper.addMarkerClickCallback(this.onMarkerClick);
 
     // listen to popup closing
-    this.uiContainer.addEventListener('closedPopup.storesMap', () => {
+    this.uiContainer.addEventListener('closedPopup.locationsMap', () => {
       this.closePopups();
     });
 
@@ -543,22 +533,22 @@ export default class StoresMap {
    * handle marker clicks
    */
   protected onMarkerClick = (marker: MapMarkerInterface) => {
-    // deselect other focused stores
-    [...this.storeList.querySelectorAll(`.store-wrapper.in-focus`)].forEach(item =>
+    // deselect other focused locations
+    [...this.locationList.querySelectorAll(`.location-wrapper.in-focus`)].forEach(item =>
       item.classList.remove('in-focus')
     );
 
     // select the new one
-    this.storeList
-      .querySelector(`.store-wrapper[data-property="${marker.store.id}"]`)
+    this.locationList
+      .querySelector(`.location-wrapper[data-property="${marker.location.id}"]`)
       ?.classList.add('in-focus');
 
     // make sure we have the updated distance values
-    const store = this.stores.find(store => store.id == marker.store.id);
-    const popupHtml = this.generateStorePopupHTML(store);
+    const location = this.locations.find(location => location.id == marker.location.id);
+    const popupHtml = this.generateLocationPopupHTML(location);
     const detail = {
       marker,
-      store,
+      location,
       popupHtml,
     };
     if (this.dispatchEvent('showPopup', { detail })) {
@@ -586,28 +576,28 @@ export default class StoresMap {
   };
 
   /**
-   * handle clicks on the listed stores
+   * handle clicks on the listed locations
    */
-  protected onListedStoreClick = (e: MouseEvent) => {
+  protected onListedLocationClick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
-    const storeEl = target.closest('.store-wrapper') as HTMLElement;
-    if (!storeEl || target.closest('a')) return;
+    const locationEl = target.closest('.location-wrapper') as HTMLElement;
+    if (!locationEl || target.closest('a')) return;
 
-    const storeId = storeEl.dataset.property;
-    const store = this.stores.find(store => store.id == storeId);
+    const locationId = locationEl.dataset.property;
+    const location = this.locations.find(location => location.id == locationId);
     let allowed = true;
-    if (store) {
+    if (location) {
       allowed = this.dispatchEvent('listClick', {
         detail: {
           originalEvent: e,
-          storeId,
-          store,
+          locationId,
+          location,
           mapWrapper: this.mapWrapper,
         },
       });
       if (allowed) {
         if (this.settings.focusOnClick ?? true) {
-          this.focusOnStore(store);
+          this.focusOnLocation(location);
         }
       }
     }
@@ -618,38 +608,38 @@ export default class StoresMap {
   };
 
   /**
-   * focus on a store when hovering on it
+   * focus on a location when hovering on it
    */
-  protected onListedStoreHover = (e: MouseEvent) => {
+  protected onListedLocationHover = (e: MouseEvent) => {
     if (!this.settings.focusOnHover) {
       return;
     }
     const target = e.target as HTMLElement;
-    const storeEl = target.closest('.store-wrapper') as HTMLElement;
-    if (!storeEl || target.closest('a')) return;
+    const locationEl = target.closest('.location-wrapper') as HTMLElement;
+    if (!locationEl || target.closest('a')) return;
 
-    const storeId = storeEl.dataset.property;
-    const store = this.stores.find(store => store.id == storeId);
+    const locationId = locationEl.dataset.property;
+    const location = this.locations.find(location => location.id == locationId);
     let allowed = true;
-    if (store) {
+    if (location) {
       // don't trigger twice
-      if (this.hoveredStore && this.hoveredStore.id == store.id) {
+      if (this.hoveredLocation && this.hoveredLocation.id == location.id) {
         return;
       }
 
       allowed = this.dispatchEvent('listHover', {
         detail: {
           originalEvent: e,
-          storeId,
-          store,
+          locationId,
+          location,
           mapWrapper: this.mapWrapper,
         },
       });
       if (allowed) {
-        this.hoveredStore = store;
+        this.hoveredLocation = location;
         setTimeout(() => {
-          if (this.hoveredStore && this.hoveredStore.id == store.id) {
-            this.focusOnStore(store);
+          if (this.hoveredLocation && this.hoveredLocation.id == location.id) {
+            this.focusOnLocation(location);
           }
         }, this.settings.focusOnHoverTimeout || 1000);
       }
@@ -657,30 +647,30 @@ export default class StoresMap {
   };
 
   /**
-   * hover out of a store
+   * hover out of a location
    */
-  protected onListedStoreHoverOut = (e: MouseEvent) => {
-    if (!this.hoveredStore) return;
+  protected onListedLocationHoverOut = (e: MouseEvent) => {
+    if (!this.hoveredLocation) return;
 
     const target = e.target as HTMLElement;
-    const storeEl = target.closest('.store-wrapper') as HTMLElement;
-    if (!storeEl || target.closest('a')) return;
+    const locationEl = target.closest('.location-wrapper') as HTMLElement;
+    if (!locationEl || target.closest('a')) return;
 
-    const storeId = storeEl.dataset.property;
-    const store = this.stores.find(store => store.id == storeId);
-    if (store) {
-      if (this.hoveredStore && this.hoveredStore.id == store.id) {
-        this.hoveredStore = null;
+    const locationId = locationEl.dataset.property;
+    const location = this.locations.find(location => location.id == locationId);
+    if (location) {
+      if (this.hoveredLocation && this.hoveredLocation.id == location.id) {
+        this.hoveredLocation = null;
       }
     }
   };
 
   /**
-   * focus on a specific store
-   * @param store
+   * focus on a specific location
+   * @param location
    */
-  focusOnStore = (store: StoreData): this => {
-    this.mapWrapper.panTo(store);
+  focusOnLocation = (location: LocationData): this => {
+    this.mapWrapper.panTo(location);
     const zoom = this.settings.focusedZoom || 17;
     setTimeout(() => this.mapWrapper.setZoom(zoom), 300);
     return this;
@@ -737,7 +727,7 @@ export default class StoresMap {
    * get the autocomplete search results for addresses
    */
   getSearchResults = async (searchValue: string) => {
-    const zipcodeRegex = '^(([0-8][0-9])|(9[0-5])|(2[ab]))[0-9]{3}$';
+    const zipcodeRegex = /^(([0-8][0-9])|(9[0-5])|(2[ab]))[0-9]{3}$/;
 
     let searchPromise: Promise<SearchResult[]>;
     if (searchValue.match(zipcodeRegex)) {
@@ -808,11 +798,11 @@ export default class StoresMap {
   };
 
   /**
-   * scroll to a specific store
+   * scroll to a specific location
    */
-  scrollTo = (store: HTMLElement = null): this => {
-    store = store || this.uiContainer.querySelector('.store-wrapper');
-    store.scrollIntoView();
+  scrollTo = (location: HTMLElement = null): this => {
+    location = location || this.uiContainer.querySelector('.location-wrapper');
+    location.scrollIntoView();
     return this;
   };
 }

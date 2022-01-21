@@ -1,11 +1,7 @@
-import {
-  AutocompleteResult,
-  SearchProvider,
-  SearchResult,
-} from '../interfaces';
+import { AutocompleteResult, SearchProvider, SearchResult } from '../interfaces';
 /// <reference types="google.maps" />
 
-export class GoogleMapsGeocoderProvider implements SearchProvider {
+export default class GoogleMapsGeocoderProvider implements SearchProvider {
   results: SearchResult[] = [];
 
   _search = (term: string): Promise<SearchResult[]> => {

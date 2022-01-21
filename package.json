@@ -41,7 +41,8 @@
     "clean": "node tools/cleanup",
     "package": "npm run build && npm pack",
     "addscope": "node tools/packagejson name @smartimpact-it/locations-map",
-    "postversion": "git push --follow-tags"
+    "postversion": "git push --follow-tags",
+    "test-locally": "local-package-publisher -p"
   },
   "publishConfig": {
     "access": "public",
@@ -86,6 +87,7 @@
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
     "@babel/register": "^7.16.9",
+    "@types/list.js": "^2.3.1",
     "@types/lodash": "^4.14.178",
     "autoprefixer": "^10.4.2",
     "babel-jest": "^27.4.6",
@@ -94,6 +96,7 @@
     "cross-env": "^7.0.3",
     "css-loader": "^6.5.1",
     "jest": "^27.4.7",
+    "local-package-publisher": "^1.0.4",
     "mini-css-extract-plugin": "^2.5.2",
     "postcss": "^8.4.5",
     "postcss-loader": "^6.2.1",

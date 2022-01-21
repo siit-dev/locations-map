@@ -2,9 +2,10 @@
 /// <reference path="../node_modules/@types/leaflet/index.d.ts" />
 
 import { MarkerClustererOptions } from '@googlemaps/markerclustererplus';
-import List from 'list.js';
+import { ListOptions } from 'list.js';
+import MapsWrapperInterface from './map-providers/MapsWrapperInterface';
 
-export interface StoreData {
+export interface LocationData {
   latitude: number;
   longitude: number;
   lat: number;
@@ -21,12 +22,12 @@ export interface StoreData {
   [key: string]: any;
 }
 
-export interface IndexedStoreData {
-  [key: string]: StoreData;
+export interface IndexedLocationData {
+  [key: string]: LocationData;
 }
 
 export type IconCallback = (
-  store: StoreData,
+  location: LocationData,
   selected?: boolean
 ) => string | google.maps.Icon | google.maps.Symbol | L.Icon | L.DivIcon;
 export type Icon =
@@ -37,26 +38,23 @@ export type Icon =
   | L.Icon
   | L.DivIcon;
 
-export interface StoreContainerSettings {
+export interface LocationContainerSettings {
   latitude: number;
   longitude: number;
   zoom: number;
-  stores: Array<StoreData>;
+  locations: Array<LocationData>;
   city: string;
   zip: string;
   displaySearch: boolean;
+  mapProvider: MapsWrapperInterface;
+  searchProvider?: SearchProvider;
   filters?: string[];
-  storesPopup: { [key: number]: string };
-  useGoogleMaps?: boolean;
-  useGoogleMapsGeocoder?: boolean;
-  apiKey?: string | undefined;
-  googleMapsSettings?: google.maps.MapOptions;
-  paginationSettings?: List.ListOptions;
+  locationsPopup: { [key: number]: string };
+  paginationSettings?: ListOptions;
   autocomplete?: boolean;
   focusedZoom?: number;
   focusedAreaZoom?: number;
   icon?: Icon;
-  clusters?: boolean;
   clusterSettings?: MarkerClustererOptions;
   scrollToGeolocation?: boolean;
   focusOnClick?: boolean;

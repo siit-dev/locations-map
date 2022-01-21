@@ -1,6 +1,5 @@
-import { MarkerClustererOptions } from '@googlemaps/markerclustererplus';
-import { Icon, StoreData } from './interfaces';
-import StoresMap from './StoresMap';
+import { Icon, LocationData } from '../interfaces';
+import LocationsMap from '../LocationsMap';
 
 export interface MapPositionInterface {
   latitude: number;
@@ -10,15 +9,13 @@ export interface MapPositionInterface {
 export interface MapMarkerInterface extends MapPositionInterface {
   icon?: string;
   popup?: string;
-  store?: StoreData;
+  location?: LocationData;
 }
 
 export interface MapSettingsInterface {
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   zoom?: number;
-  clusters?: boolean;
-  clusterSettings?: MarkerClustererOptions;
   icon?: Icon;
   [key: string]: any;
 }
@@ -26,16 +23,14 @@ export interface MapSettingsInterface {
 export default interface MapsWrapperInterface {
   map?: any;
   mapMarkers?: any;
-  parent: StoresMap;
+  parent?: LocationsMap;
 
-  initializeMap: (
-    elementId?: string,
-    settings?: MapSettingsInterface
-  ) => Promise<any>;
+  initializeMap: (elementId?: string, settings?: MapSettingsInterface) => Promise<any>;
+  setParent: (parent: LocationsMap) => this;
   addMapMarkers: (markers: MapMarkerInterface[]) => this;
   addMarkerHoverCallback: (fn: (e: any) => void) => this;
   addMarkerClickCallback: (fn: (marker: MapMarkerInterface) => void) => this;
-  filterMarkers: (fn: (marker: MapMarkerInterface) => boolean) => this;
+  filterMarkers(fn: (marker: MapMarkerInterface) => boolean): this;
   highlightMapMarker: (marker: MapMarkerInterface) => this;
   unhighlightMarkers: () => this;
 
