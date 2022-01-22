@@ -92,7 +92,6 @@ export default class LocationsMap {
     locations = locations.map(location => {
       location = {
         ...location,
-        hours: location.hours ? JSON.parse(location.hours.toString()) : [],
         latitude: parseFloat(location.latitude.toString()),
         longitude: parseFloat(location.longitude.toString()),
       };
@@ -114,6 +113,12 @@ export default class LocationsMap {
       }
 
       return location;
+    });
+
+    this.dispatchEvent('parseLocations', {
+      detail: {
+        locations,
+      },
     });
 
     return locations;
@@ -150,9 +155,11 @@ export default class LocationsMap {
     this.popupContainers.forEach(container => {
       container.innerHTML = '';
     });
-    [...this.locationList.querySelectorAll('.location-wrapper.in-focus')].forEach(item =>
-      item.classList.remove('in-focus')
-    );
+    if (this.locationList) {
+      [...this.locationList.querySelectorAll('.location-wrapper.in-focus')].forEach(
+        item => item.classList.remove('in-focus')
+      );
+    }
     return this;
   }
 
@@ -168,6 +175,8 @@ export default class LocationsMap {
    * update the HTML for the locations list
    */
   updateLocationsListContent = (): this => {
+    if (!this.locationList) return this;
+
     let html = '';
     html += this.generateResultsCount(this.filteredLocations.length);
     html += '<ul class="list locations-list-inner">';
@@ -266,7 +275,8 @@ export default class LocationsMap {
       return detail.html;
     }
 
-    return `template with selector "${selector}" not found`;
+    console.error(`template with selector "${selector}" not found`);
+    return '';
   };
 
   /**
@@ -290,7 +300,8 @@ export default class LocationsMap {
       return detail.html;
     }
 
-    return `template with selector "${selector}" not found`;
+    console.error(`template with selector "${selector}" not found`);
+    return '';
   };
 
   /**
@@ -502,12 +513,18 @@ export default class LocationsMap {
       button.addEventListener('click', this.geolocate)
     );
 
-    // pan to location when clicking on the list
-    this.locationList.addEventListener('click', this.onListedLocationClick);
+    if (this.locationList) {
+      // pan to location when clicking on the list
+      this.locationList.addEventListener('click', this.onListedLocationClick);
 
-    // pan to location when hovering on a location
-    this.locationList.addEventListener('mouseenter', this.onListedLocationHover, true);
-    this.locationList.addEventListener('mouseleave', this.onListedLocationHoverOut, true);
+      // pan to location when hovering on a location
+      this.locationList.addEventListener('mouseenter', this.onListedLocationHover, true);
+      this.locationList.addEventListener(
+        'mouseleave',
+        this.onListedLocationHoverOut,
+        true
+      );
+    }
 
     // listen to marker clicks
     this.mapWrapper.addMarkerClickCallback(this.onMarkerClick);
@@ -533,15 +550,17 @@ export default class LocationsMap {
    * handle marker clicks
    */
   protected onMarkerClick = (marker: MapMarkerInterface) => {
-    // deselect other focused locations
-    [...this.locationList.querySelectorAll(`.location-wrapper.in-focus`)].forEach(item =>
-      item.classList.remove('in-focus')
-    );
+    if (this.locationList) {
+      // deselect other focused locations
+      [...this.locationList.querySelectorAll(`.location-wrapper.in-focus`)].forEach(
+        item => item.classList.remove('in-focus')
+      );
 
-    // select the new one
-    this.locationList
-      .querySelector(`.location-wrapper[data-property="${marker.location.id}"]`)
-      ?.classList.add('in-focus');
+      // select the new one
+      this.locationList
+        .querySelector(`.location-wrapper[data-property="${marker.location.id}"]`)
+        ?.classList.add('in-focus');
+    }
 
     // make sure we have the updated distance values
     const location = this.locations.find(location => location.id == marker.location.id);

@@ -134,7 +134,7 @@ You have 2 types of Google maps providers: with and without clusters:
 ```javascript
 import LocationsMap, {
   GoogleMapsClusteredWrapper,
-  GoogleMapsGeocoderProvider
+  GoogleMapsGeocoderProvider,
 } from '@smartimpact-it/locations-map';
 
 const container = document.querySelector('locations-map-container');
@@ -162,19 +162,18 @@ if (container) {
   const searchProvider = new GoogleMapsGeocoderProvider();
 
   const locationsMapSettings = {
-    latitude = 44.1,
-    longitude = 10.3,
-    zoom = 8,
+    latitude: 44.1,
+    longitude: 10.3,
+    zoom: 8,
     locations,
-    displaySearch = true,
-    filters = [],
+    displaySearch: true,
+    filters: [],
     searchProvider,
     mapProvider,
-  }
+  };
 
   const locationsMap = new LocationsMap(container, locationsMapSettings);
 }
-
 ```
 
 ### Leaflet with Nominatim Geocoder
@@ -187,7 +186,7 @@ You have 2 types of Leaflet maps: with and without clusters:
 ```javascript
 import LocationsMap, {
   LeafletMapClusteredWrapper,
-  NominatimProvider
+  NominatimProvider,
 } from '@smartimpact-it/locations-map';
 
 const container = document.querySelector('locations-map-container');
@@ -198,12 +197,12 @@ if (container) {
   const locationsMapSettings = {
     searchProvider,
     mapProvider,
-    latitude = 44.1,
-    longitude = 10.3,
-    zoom = 8,
+    latitude: 44.1,
+    longitude: 10.3,
+    zoom: 8,
     locations,
-    displaySearch = true,
-    filters = [],
+    displaySearch: true,
+    filters: [],
     focusedZoom: 17,
     paginationSettings: {
       page: 4,
@@ -213,7 +212,6 @@ if (container) {
 
   const locationsMap = new LocationsMap(container, locationsMapSettings);
 }
-
 ```
 
 ## Settings for the Locations Map class
@@ -260,6 +258,7 @@ There are multiple events dispatched by the location map:
 
 - `initializing` - before initialization. It allows you to change the settings.
 - `initialized` - after the map has been initialized
+- `parseLocations` - triggered after parsing the locations
 - `appliedFilters` - after filters are updated
 - `updatedLocations.locationsMap` - before the locations list is updated, for example after geolocation
 - `updatedLocationListContent` - after the location list has been updated

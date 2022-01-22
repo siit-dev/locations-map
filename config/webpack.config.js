@@ -15,6 +15,7 @@ const makeConfig = () => {
     entry: {
       index: ['./src/index'],
       app: ['./src/scss/app.scss'],
+      leaflet: ['./src/scss/leaflet.scss'],
     },
     output: {
       path: path.resolve(__dirname, '../dist/umd'),
