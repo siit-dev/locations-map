@@ -11,7 +11,7 @@ import L from 'leaflet';
 
 export default class LeafletMapsWrapper implements MapsWrapperInterface {
   map?: L.Map;
-  mapMarkers?: L.Marker[];
+  mapMarkers?: L.Marker[] = [];
   settings: MapSettingsInterface;
   infoWindow?: L.Popup;
   parent?: LocationsMap = null;

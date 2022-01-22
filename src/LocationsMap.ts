@@ -56,11 +56,18 @@ export default class LocationsMap {
     this.settings = JSON.parse(
       this.uiContainer.dataset.settings
     ) as LocationContainerSettings;
-    this.settings = { ...this.settings, ...extraSettings };
+    this.settings = {
+      geolocateOnStart: true,
+      zoom: 8,
+      longitude: 0,
+      latitude: 0,
+      ...this.settings,
+      ...extraSettings,
+    };
     const {
       latitude,
       longitude,
-      zoom = 8,
+      zoom,
       locations = [],
       displaySearch = true,
       filters = [],

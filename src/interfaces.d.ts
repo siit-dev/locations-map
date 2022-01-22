@@ -56,6 +56,7 @@ export interface LocationContainerSettings {
   focusedAreaZoom?: number;
   icon?: Icon;
   clusterSettings?: MarkerClustererOptions;
+  geolocateOnStart?: boolean;
   scrollToGeolocation?: boolean;
   focusOnClick?: boolean;
   focusOnHover?: boolean;

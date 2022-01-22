@@ -15,7 +15,7 @@ export interface GoogleMapSettingsInterface extends MapSettingsInterface {
 
 export default class GoogleMapsWrapper implements MapsWrapperInterface {
   map?: google.maps.Map;
-  mapMarkers?: google.maps.Marker[];
+  mapMarkers?: google.maps.Marker[] = [];
   settings: GoogleMapSettingsInterface;
   infoWindow?: google.maps.InfoWindow;
   parent?: LocationsMap = null;

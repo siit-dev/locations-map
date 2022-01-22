@@ -79,6 +79,7 @@ Inside your HTML, create a structure similar to this:
   <template class="template-popup-location">
     <div class="location in-popup">
       <div class="location">
+        <button class="close-popup" data-close-popup>&times;</button>
         <div class="location-info">
           <h3 class="location-title">{{ name }}</h3>
           <div class="address">
@@ -225,10 +226,39 @@ if (container) {
 | `autocomplete`        | `false`       | whether to use autocomplete on search                                         |
 | `zoom`                | `8`           | initial zoom value                                                            |
 | `focusedZoom`         | `17`          | the zoom value when a location is focused                                     |
+| `geolocateOnStart`    | `true`        | Try to geolocate the current user when the map is displayed                   |
 | `scrollToGeolocation` | `false`       | Scroll to the geolocated position when we apply geolocation                   |
 | `focusOnHover`        | `false`       | Scroll to the hovered store on the map when hovering on the store in the list |
 | `paginationSettings`  | `{ page: 5}`  | settings for the `List.js` instance used for the stores list                  |
 | `filters`             | `[]`          | The initial set of active filters                                             |
+| `icon`                |               | the icon to use, or a callback                                                |
+
+The `icon` parameter can accept a callback to dynamically set the icon (for example, if you have different types or different icons if stores are selected).
+
+```javascript
+import iconMulti from '../img/icon-store-multi.svg';
+import iconMultiSelected from '../img/icon-store-multi-selected.svg';
+import iconForest from '../img/icon-forest.svg';
+import iconForestSelected from '../img/icon-forest-selected.svg';
+
+new LocationMap(element, {
+  // ...
+  icon: (store, selected = false) => {
+    switch (store.type) {
+      case 'forest':
+        return {
+          url: selected ? iconForestSelected : iconForest,
+          anchor: { x: 10, y: 30 },
+        };
+      default:
+        return {
+          url: selected ? iconMultiSelected : iconMulti,
+          anchor: { x: 10, y: 30 },
+        };
+    }
+  },
+});
+```
 
 ## Filtering
 
@@ -256,21 +286,21 @@ You can use the following methods on the `LocationsMap` instance:
 
 There are multiple events dispatched by the location map:
 
-- `initializing` - before initialization. It allows you to change the settings.
-- `initialized` - after the map has been initialized
-- `parseLocations` - triggered after parsing the locations
-- `appliedFilters` - after filters are updated
-- `updatedLocations.locationsMap` - before the locations list is updated, for example after geolocation
-- `updatedLocationListContent` - after the location list has been updated
-- `search` (cancelable) - when the search form is submitted, before starting the search
-- `updatingFromSearch` (cancelable) - when search is starting
-- `updatedFromSearch` - after search has been done
+- `initializing.locationsMap` before initialization. It allows you to change the settings.
+- `initialized.locationsMap` after the map has been initialized
+- `parseLocations.locationsMap` triggered after parsing the locations
+- `appliedFilters.locationsMap` after filters are updated
+- `updatedLocations.locationsMap` before the locations list is updated, for example after geolocation
+- `updatedLocationListContent.locationsMap` after the location list has been updated
+- `search.locationsMap` (cancelable) - when the search form is submitted, before starting the search
+- `updatingFromSearch.locationsMap` (cancelable) - when search is starting
+- `updatedFromSearch.locationsMap` after search has been done
 - `showPopup` (cancelable) - when a location is clicked and a popup should be displayed
-- `showPopupOnMap` (cancelable) - when a location is clicked and a popup should be displayed on the map
-- `showPopupOutsideMap` (cancelable) - when a location is clicked and a popup should be displayed outside the map
-- `listClick` (cancelable) - when a location is clicked in the list, and the map should scroll to it and close existing popups
-- `listHover` (cancelable) - when a location is hovered in the list, and the map should scroll to it
-- `updatedMapPosition` - when the map position has been changed
+- `showPopupOnMap.locationsMap` (cancelable) - when a location is clicked and a popup should be displayed on the map
+- `showPopupOutsideMap.locationsMap` (cancelable) - when a location is clicked and a popup should be displayed outside the map
+- `listClick.locationsMap` (cancelable) - when a location is clicked in the list, and the map should scroll to it and close existing popups
+- `listHover.locationsMap` (cancelable) - when a location is hovered in the list, and the map should scroll to it
+- `updatedMapPosition.locationsMap` when the map position has been changed
 
 ## More info
 
