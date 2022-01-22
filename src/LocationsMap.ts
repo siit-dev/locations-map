@@ -12,9 +12,6 @@ import { Position } from './interfaces';
 import autoComplete from '@tarekraafat/autocomplete.js';
 import List from 'list.js';
 
-import '@tarekraafat/autocomplete.js/dist/css/autoComplete.css';
-// import './scss/app.scss';
-
 /**
  * the class to handle the location map
  */
@@ -52,9 +49,9 @@ export default class LocationsMap {
     this.popupContainers = [
       ...this.uiContainer.querySelectorAll('locations-map-popup'),
     ] as HTMLElement[];
-    this.searchInput = this.searchForm.querySelector(
-      'input[type="search"]'
-    ) as HTMLInputElement;
+    this.searchInput = this.searchForm
+      ? (this.searchForm.querySelector('input[type="search"]') as HTMLInputElement)
+      : null;
 
     this.settings = JSON.parse(
       this.uiContainer.dataset.settings
@@ -812,6 +809,7 @@ export default class LocationsMap {
    * get the results for the autocomplete dropdown
    */
   protected getAutocompleteResults = async () => {
+    if (!this.searchInput) return [];
     await this.getSearchResults(this.searchInput.value);
     return this.searchProvider.getAutocompleteData();
   };
