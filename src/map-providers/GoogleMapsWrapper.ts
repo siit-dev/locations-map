@@ -6,18 +6,18 @@ import MapsWrapperInterface, {
 } from './MapsWrapperInterface';
 import LocationsMap from '../LocationsMap';
 import { LoaderOptions } from '@googlemaps/js-api-loader';
-/// <reference types="google.maps" />
+import { InfoWindow, MapOptions, Marker, GoogleMap } from '..';
 
 export interface GoogleMapSettingsInterface extends MapSettingsInterface {
   apiSettings?: LoaderOptions;
-  mapSettings?: google.maps.MapOptions;
+  mapSettings?: MapOptions;
 }
 
 export default class GoogleMapsWrapper implements MapsWrapperInterface {
-  map?: google.maps.Map;
-  mapMarkers?: google.maps.Marker[] = [];
+  map?: GoogleMap;
+  mapMarkers?: Marker[] = [];
   settings: GoogleMapSettingsInterface;
-  infoWindow?: google.maps.InfoWindow;
+  infoWindow?: InfoWindow;
   parent?: LocationsMap = null;
 
   constructor(settings?: GoogleMapSettingsInterface) {
@@ -93,10 +93,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
     return this.map;
   }
 
-  createMapMarker(
-    marker: MapMarkerInterface,
-    hasClusters: boolean = false
-  ): google.maps.Marker {
+  createMapMarker(marker: MapMarkerInterface, hasClusters: boolean = false): Marker {
     const mapMarker = new google.maps.Marker({
       position: {
         lat: parseFloat(marker.latitude.toString()),
@@ -174,7 +171,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
     return this.map;
   }
 
-  getMapMarkers(): google.maps.Marker[] {
+  getMapMarkers(): Marker[] {
     return this.mapMarkers;
   }
 

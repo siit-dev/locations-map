@@ -1,8 +1,9 @@
 import { MapMarkerInterface } from './MapsWrapperInterface';
 
-/// <reference path="./node_modules/@types/leaflet/index.d.ts" />
+/// <reference types="leaflet" />
+/// <reference types="leaflet.markercluster" />
 
-import L from 'leaflet';
+import L, { MarkerClusterGroup } from 'leaflet';
 import 'leaflet.markercluster';
 import { LeafletMapsWrapper } from '..';
 import ClusteredMapsWrapperInterface from './ClusteredMapsWrapperInterface';
@@ -11,15 +12,13 @@ export default class LeafletMapsClusteredWrapper
   extends LeafletMapsWrapper
   implements ClusteredMapsWrapperInterface
 {
-  clusterer: any;
+  clusterer: MarkerClusterGroup;
 
   addMapMarkers(markers: MapMarkerInterface[]): this {
     super.addMapMarkers(markers);
 
     // Add a marker clusterer to manage the markers.
-    this.clusterer = (L as any).markerClusterGroup({
-      ...(this.settings.clusterSettings || {}),
-    });
+    this.clusterer = (L as any).markerClusterGroup(this.settings.clusterSettings || {});
     this.mapMarkers.forEach(mapMarker => {
       mapMarker.removeFrom(this.map);
       this.clusterer.addLayer(mapMarker);

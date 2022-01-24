@@ -1,3 +1,5 @@
+/// <reference types="google.maps" />
+
 export { default as default } from './LocationsMap';
 export { default as LocationsMap } from './LocationsMap';
 
@@ -31,6 +33,12 @@ export type {
   MapMarkerInterface,
   MapPositionInterface,
 } from './map-providers/MapsWrapperInterface';
+
+type MapOptions = google.maps.MapOptions;
+type GoogleMap = google.maps.Map;
+type Marker = google.maps.Marker;
+type InfoWindow = google.maps.InfoWindow;
+export type { MapOptions, GoogleMap, Marker, InfoWindow };
 
 export { distance } from './utils/locations-utils';
 export { dateWithTimeZone } from './utils/locations-utils';

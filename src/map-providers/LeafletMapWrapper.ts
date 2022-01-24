@@ -5,7 +5,7 @@ import MapsWrapperInterface, {
 } from './MapsWrapperInterface';
 import LocationsMap from '../LocationsMap';
 
-/// <reference path="./node_modules/@types/leaflet/index.d.ts" />
+/// <reference types="leaflet" />
 
 import L from 'leaflet';
 

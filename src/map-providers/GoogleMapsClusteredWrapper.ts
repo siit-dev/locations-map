@@ -5,7 +5,6 @@ import {
   ClusteredMapsWrapperInterface,
   GoogleMapSettingsInterface,
 } from '..';
-/// <reference types="google.maps" />
 
 export interface GoogleMapClusteredSettingsInterface extends GoogleMapSettingsInterface {
   clusterSettings?: MarkerClustererOptions;
