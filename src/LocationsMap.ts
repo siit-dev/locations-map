@@ -145,9 +145,9 @@ export default class LocationsMap {
     this.searchProvider = searchProvider;
 
     this.paginationProvider = paginationProvider;
-    this.autocompleteProvider.setParent(this);
+    this.paginationProvider?.setParent(this);
     this.autocompleteProvider = autocompleteProvider;
-    this.autocompleteProvider.setParent(this);
+    this.autocompleteProvider?.setParent(this);
 
     this.#zoom = zoom;
     this.#filters = filters;
@@ -565,7 +565,7 @@ export default class LocationsMap {
     });
 
     if (this.searchInput) {
-      this.settings.autocompleteProvider?.setup({
+      this.autocompleteProvider?.setup({
         getResults: this.getAutocompleteResults,
         input: this.searchInput,
         onSelect: (selected: SearchResult) => {
