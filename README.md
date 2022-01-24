@@ -98,7 +98,7 @@ Inside your HTML, create a structure similar to this:
 
 The placeholders above (`{{ postcode }}`, `{{ name }}` etc) will be replaced by the JavaScript library using the data from the stores/locations. These are keys that should also be present on the location objects.
 
-For example, your locations array could look like this (the `id`, `longitude` and `latitude` fields are mandatory; also `type` if you want to use filtering):
+For example, your locations array could look like this (the `id`, `longitude` and `latitude` fields are mandatory; also `type` (string) or `filterTypes` (string[]) if you want to use filtering):
 
 ```javascript
 const locations = [
@@ -110,6 +110,7 @@ const locations = [
     city: 'Nantes',
     longitude: 44.2,
     latitude: 40.2,
+    filterTypes: ['location', 'forest'],
   },
   {
     id: 2,
@@ -119,6 +120,7 @@ const locations = [
     city: 'Nantes',
     longitude: 44.2,
     latitude: 40.2,
+    filterTypes: ['location'],
   },
 ];
 ```
@@ -217,21 +219,22 @@ if (container) {
 
 ## Settings for the Locations Map class
 
-| Setting               | Default value | Description                                                                   |
-| --------------------- | ------------- | ----------------------------------------------------------------------------- |
-| `latitude`            |               | the position on the map which will be displayed when first loaded             |
-| `longitude`           |               | the position on the map which will be displayed when first loaded             |
-| `mapProvider`         |               | the map provider (an instance of the map providers)                           |
-| `searchProvider`      |               | the search provider (if search is to be used)                                 |
-| `autocomplete`        | `false`       | whether to use autocomplete on search                                         |
-| `zoom`                | `8`           | initial zoom value                                                            |
-| `focusedZoom`         | `17`          | the zoom value when a location is focused                                     |
-| `geolocateOnStart`    | `true`        | Try to geolocate the current user when the map is displayed                   |
-| `scrollToGeolocation` | `false`       | Scroll to the geolocated position when we apply geolocation                   |
-| `focusOnHover`        | `false`       | Scroll to the hovered store on the map when hovering on the store in the list |
-| `paginationSettings`  | `{ page: 5}`  | settings for the `List.js` instance used for the stores list                  |
-| `filters`             | `[]`          | The initial set of active filters                                             |
-| `icon`                |               | the icon to use, or a callback                                                |
+| Setting                     | Default value | Description                                                                                                                        |
+| --------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `latitude`                  |               | the position on the map which will be displayed when first loaded                                                                  |
+| `longitude`                 |               | the position on the map which will be displayed when first loaded                                                                  |
+| `mapProvider`               |               | the map provider (an instance of the map providers)                                                                                |
+| `searchProvider`            |               | the search provider (if search is to be used)                                                                                      |
+| `autocomplete`              | `false`       | whether to use autocomplete on search. Allowed values: `false` / `true` or a callback to allow you to setup your own autocomplete. |
+| `autocompleteExtraSettings` | `{}`          | extra settings for the `autoComplete.js` instance.                                                                                 |
+| `zoom`                      | `8`           | initial zoom value                                                                                                                 |
+| `focusedZoom`               | `17`          | the zoom value when a location is focused                                                                                          |
+| `geolocateOnStart`          | `true`        | Try to geolocate the current user when the map is displayed                                                                        |
+| `scrollToGeolocation`       | `false`       | Scroll to the geolocated position when we apply geolocation                                                                        |
+| `focusOnHover`              | `false`       | Scroll to the hovered store on the map when hovering on the store in the list                                                      |
+| `paginationSettings`        | see below     | settings for the [`List.js`](https://listjs.com/) instance used for the stores list. Set to `false`/`null` to disable pagination.  |
+| `filters`                   | `[]`          | The initial set of active filters                                                                                                  |
+| `icon`                      |               | the icon to use, or a callback                                                                                                     |
 
 The `icon` parameter can accept a callback to dynamically set the icon (for example, if you have different types or different icons if stores are selected).
 
@@ -260,6 +263,39 @@ new LocationMap(element, {
 });
 ```
 
+The default settings are the following:
+
+```javascript
+const defaultSettings = {
+  latitude: 0,
+  longitude: 0,
+  zoom: 6,
+  focusedZoom: 17,
+  focusedAreaZoom: 10,
+  locations: [],
+  displaySearch: false,
+  mapProvider: null,
+  searchProvider: null,
+  filters: [],
+  paginationSettings: {
+    page: 5,
+    pagination: {
+      paginationClass: 'pagination',
+      item: "<li><a class='page'></a></li>",
+      outerWindow: 1,
+    },
+  },
+  autocomplete: true,
+  icon: null,
+  clusterSettings: {},
+  geolocateOnStart: true,
+  scrollToGeolocation: false,
+  focusOnClick: true,
+  focusOnHover: false,
+  focusOnHoverTimeout: 1000,
+};
+```
+
 ## Filtering
 
 You can implement your own logic for creating filters on the page (for example, radio buttons or checkboxes). You can then filter the stores that are displayed, based on the their `type` property, using the `setFilters` method on the `LocationsMap` instance:
@@ -274,13 +310,15 @@ locationsMap.setFilters(['big', 'small']);
 You can use the following methods on the `LocationsMap` instance:
 
 - `setFilters(newFilters)` - set the current filters for the stores to be displayed
-- `updateLocations(newLocations)` - to replace the set of locations (for example, if you want to load them by AJAX)
+- `updateLocations(callback)` - to update the existing of locations (for example, if you want to modify something in their info). This receives a callback as a parameter, and the callback will receive the existing locations and should return an updated list of locations.
+- `setLocations(newLocations)` - to replace the set of locations (for example, if you want to load them by AJAX)
 - `closePopups()` - close the active popup
 - `focusOnLocation(location)` - scroll the map to a specific location
 - `setMapPosition(position)` - set a new position for the map
 - `geolocate()` - try to geolocate the current user
 - `getSearchResults(searchValue)` (promise) - get the results for a specific search string
 - `doSearch()` (promise) - search for the search string in the search form
+- `setZoom(value)` - set the zoom level
 
 ## Events
 

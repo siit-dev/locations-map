@@ -6,19 +6,13 @@ import { ListOptions } from 'list.js';
 import MapsWrapperInterface from './map-providers/MapsWrapperInterface';
 
 export interface LocationData {
+  id: string;
   latitude: number;
   longitude: number;
-  lat: number;
-  lon: number;
-  hours?: object | string;
-  id: string;
-  name?: string;
-  address1?: string;
-  address2?: string;
-  city?: string;
-  phone?: string;
-  link?: string;
   type?: string;
+  name?: string;
+  filterTypes?: string | string[];
+  hours?: object | string;
   [key: string]: any;
 }
 
@@ -38,22 +32,26 @@ export type Icon =
   | L.Icon
   | L.DivIcon;
 
+export type CustomAutocompleteCallback = (settings: {
+  getResults: () => Promise<AutocompleteResult[]>;
+  input: HTMLInputElement | null;
+  onSelect: (selected: SearchResult) => any | void;
+}) => any;
+
 export interface LocationContainerSettings {
   latitude: number;
   longitude: number;
-  zoom: number;
   locations: Array<LocationData>;
-  city: string;
-  zip: string;
-  displaySearch: boolean;
+  zoom?: number;
+  focusedZoom?: number;
+  focusedAreaZoom?: number;
+  displaySearch?: boolean;
   mapProvider: MapsWrapperInterface;
   searchProvider?: SearchProvider;
   filters?: string[];
-  locationsPopup: { [key: number]: string };
-  paginationSettings?: ListOptions;
-  autocomplete?: boolean;
-  focusedZoom?: number;
-  focusedAreaZoom?: number;
+  paginationSettings?: ListOptions | false;
+  autocomplete?: boolean | CustomAutocompleteCallback;
+  autocompleteExtraSettings?: Record<string, unknown>;
   icon?: Icon;
   clusterSettings?: MarkerClustererOptions;
   geolocateOnStart?: boolean;
