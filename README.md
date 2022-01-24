@@ -219,22 +219,21 @@ if (container) {
 
 ## Settings for the Locations Map class
 
-| Setting                     | Default value | Description                                                                                                                        |
-| --------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `latitude`                  |               | the position on the map which will be displayed when first loaded                                                                  |
-| `longitude`                 |               | the position on the map which will be displayed when first loaded                                                                  |
-| `mapProvider`               |               | the map provider (an instance of the map providers)                                                                                |
-| `searchProvider`            |               | the search provider (if search is to be used)                                                                                      |
-| `autocomplete`              | `false`       | whether to use autocomplete on search. Allowed values: `false` / `true` or a callback to allow you to setup your own autocomplete. |
-| `autocompleteExtraSettings` | `{}`          | extra settings for the `autoComplete.js` instance.                                                                                 |
-| `zoom`                      | `8`           | initial zoom value                                                                                                                 |
-| `focusedZoom`               | `17`          | the zoom value when a location is focused                                                                                          |
-| `geolocateOnStart`          | `true`        | Try to geolocate the current user when the map is displayed                                                                        |
-| `scrollToGeolocation`       | `false`       | Scroll to the geolocated position when we apply geolocation                                                                        |
-| `focusOnHover`              | `false`       | Scroll to the hovered store on the map when hovering on the store in the list                                                      |
-| `paginationSettings`        | see below     | settings for the [`List.js`](https://listjs.com/) instance used for the stores list. Set to `false`/`null` to disable pagination.  |
-| `filters`                   | `[]`          | The initial set of active filters                                                                                                  |
-| `icon`                      |               | the icon to use, or a callback                                                                                                     |
+| Setting                | Default value | Description                                                                   |
+| ---------------------- | ------------- | ----------------------------------------------------------------------------- |
+| `latitude`             |               | the position on the map which will be displayed when first loaded             |
+| `longitude`            |               | the position on the map which will be displayed when first loaded             |
+| `mapProvider`          |               | the map provider (an instance of the map providers)                           |
+| `searchProvider`       |               | the search provider (if search is to be used)                                 |
+| `paginationProvider`   |               | the pagination provider (if pagination is to be used)                         |
+| `autocompleteProvider` |               | the autocomplete provider (if pagination is to be used)                       |
+| `zoom`                 | `8`           | initial zoom value                                                            |
+| `focusedZoom`          | `17`          | the zoom value when a location is focused                                     |
+| `geolocateOnStart`     | `true`        | Try to geolocate the current user when the map is displayed                   |
+| `scrollToGeolocation`  | `false`       | Scroll to the geolocated position when we apply geolocation                   |
+| `focusOnHover`         | `false`       | Scroll to the hovered store on the map when hovering on the store in the list |
+| `filters`              | `[]`          | The initial set of active filters                                             |
+| `icon`                 |               | the icon to use, or a callback                                                |
 
 The `icon` parameter can accept a callback to dynamically set the icon (for example, if you have different types or different icons if stores are selected).
 
@@ -276,15 +275,9 @@ const defaultSettings = {
   displaySearch: false,
   mapProvider: null,
   searchProvider: null,
+  paginationProvider: null,
+  autocompleteProvider: null,
   filters: [],
-  paginationSettings: {
-    page: 5,
-    pagination: {
-      paginationClass: 'pagination',
-      item: "<li><a class='page'></a></li>",
-      outerWindow: 1,
-    },
-  },
   autocomplete: true,
   icon: null,
   clusterSettings: {},
@@ -294,6 +287,46 @@ const defaultSettings = {
   focusOnHover: false,
   focusOnHoverTimeout: 1000,
 };
+```
+
+## Pagination
+
+You can setup pagination for the results list by using the `paginationProvider` argument on the `LocationsMap` instance.
+
+The library contains a default `Pagination` class, which uses [`list.js`](https://listjs.com/), but you can create your own pagination provider by implementing the `PaginationProvider` typescript interface.
+
+```javascript
+// These are the default settings for the list.js instance
+const settings = {
+  page: 5,
+  pagination: {
+    paginationClass: 'pagination',
+    item: "<li><a class='page'></a></li>",
+    outerWindow: 1,
+  },
+};
+
+const paginationProvider = new Pagination(settings);
+
+new LocationsMap({
+  //...
+  paginationProvider: new Pagination(),
+  //...
+});
+```
+
+## Autocomplete
+
+You can setup autocomplete for the search input field by using the `autocompleteProvider` argument on the `LocationsMap` instance.
+
+The library contains a default `Autocomplete` class, using [`@tarekraafat/autocomplete.js`](https://tarekraafat.github.io/autoComplete.js/), but you can create your own autocomplete provider by implementing the `AutocompleteProvider` typescript interface.
+
+```javascript
+new LocationsMap({
+  //...
+  autocompleteProvider: new Autocomplete(),
+  //...
+});
 ```
 
 ## Filtering

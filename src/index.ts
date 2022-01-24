@@ -18,12 +18,33 @@ export type {
   default as ClusteredMapsWrapperInterface,
   ClusteredMapSettingsInterface,
 } from './map-providers/ClusteredMapsWrapperInterface';
-export type { LocationData } from './interfaces';
-export type { IndexedLocationData } from './interfaces';
-export type { IconCallback } from './interfaces';
-export type { Icon } from './interfaces';
-export type { LocationContainerSettings } from './interfaces';
-export type { SearchProvider } from './interfaces';
+export type {
+  LocationData,
+  IndexedLocationData,
+  IconCallback,
+  Icon,
+  LocationContainerSettings,
+  SearchProvider,
+} from './interfaces';
+
+export {
+  default as Pagination,
+  defaultSettings as PaginationDefaultSettings,
+} from './pagination-provider/Pagination';
+export type {
+  PaginationProvider,
+  PaginationSettings,
+} from './pagination-provider/PaginationProvider.d';
+
+export {
+  default as Autocomplete,
+  defaultSettings as AutocompleteDefaultSettings,
+} from './autocomplete-provider/Autocomplete';
+export type {
+  AutocompleteProvider,
+  AutocompleteSetupSettings,
+} from './autocomplete-provider/AutocompleteProvider.d';
+
 export type { SearchResult } from './interfaces';
 export type { AutocompleteResult } from './interfaces';
 export type { Position } from './interfaces';

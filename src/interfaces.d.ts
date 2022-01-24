@@ -2,8 +2,9 @@
 /// <reference path="../node_modules/@types/leaflet/index.d.ts" />
 
 import { MarkerClustererOptions } from '@googlemaps/markerclustererplus';
-import { ListOptions } from 'list.js';
+import { AutocompleteProvider } from '.';
 import MapsWrapperInterface from './map-providers/MapsWrapperInterface';
+import { PaginationProvider } from '.';
 
 export interface LocationData {
   id: string;
@@ -32,12 +33,6 @@ export type Icon =
   | L.Icon
   | L.DivIcon;
 
-export type CustomAutocompleteCallback = (settings: {
-  getResults: () => Promise<AutocompleteResult[]>;
-  input: HTMLInputElement | null;
-  onSelect: (selected: SearchResult) => any | void;
-}) => any;
-
 export interface LocationContainerSettings {
   latitude: number;
   longitude: number;
@@ -48,10 +43,9 @@ export interface LocationContainerSettings {
   displaySearch?: boolean;
   mapProvider: MapsWrapperInterface;
   searchProvider?: SearchProvider;
+  paginationProvider?: PaginationProvider;
+  autocompleteProvider?: AutocompleteProvider;
   filters?: string[];
-  paginationSettings?: ListOptions | false;
-  autocomplete?: boolean | CustomAutocompleteCallback;
-  autocompleteExtraSettings?: Record<string, unknown>;
   icon?: Icon;
   clusterSettings?: MarkerClustererOptions;
   geolocateOnStart?: boolean;

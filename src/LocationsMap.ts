@@ -7,11 +7,10 @@ import {
   SearchResult,
   LocationContainerSettings,
   LocationData,
-} from './interfaces';
-import { Position } from './interfaces';
-import autoComplete from '@tarekraafat/autocomplete.js';
-import List from 'list.js';
-import { isFunction } from './utils/function-utils';
+  PaginationProvider,
+  Position,
+  AutocompleteProvider,
+} from '.';
 
 export const defaultSettings: LocationContainerSettings = {
   latitude: 0,
@@ -21,15 +20,9 @@ export const defaultSettings: LocationContainerSettings = {
   displaySearch: false,
   mapProvider: null,
   searchProvider: null,
+  paginationProvider: null,
+  autocompleteProvider: null,
   filters: [],
-  paginationSettings: {
-    page: 5,
-    pagination: {
-      paginationClass: 'pagination',
-      item: "<li><a class='page'></a></li>",
-      outerWindow: 1,
-    },
-  },
   autocomplete: true,
   autocompleteExtraSettings: {},
   focusedZoom: 17,
@@ -64,11 +57,11 @@ export default class LocationsMap {
 
   protected mapWrapper: MapsWrapperInterface;
   protected searchProvider: SearchProvider | null;
-  autocomplete: any;
-  protected paginationList: List;
+  protected paginationProvider: PaginationProvider | null;
+  protected autocompleteProvider: AutocompleteProvider | null;
 
   protected uiContainer: HTMLElement;
-  protected locationList: HTMLElement;
+  protected locationList?: HTMLElement;
   protected searchForm?: HTMLFormElement;
   protected searchInput?: HTMLInputElement;
   protected popupContainers?: HTMLElement[];
@@ -142,12 +135,20 @@ export default class LocationsMap {
       filters,
       searchProvider,
       mapProvider,
+      paginationProvider,
+      autocompleteProvider,
     } = this.settings;
 
     this.#latitude = latitude;
     this.#longitude = longitude;
     this.displaySearch = displaySearch && !!this.searchProvider;
     this.searchProvider = searchProvider;
+
+    this.paginationProvider = paginationProvider;
+    this.autocompleteProvider.setParent(this);
+    this.autocompleteProvider = autocompleteProvider;
+    this.autocompleteProvider.setParent(this);
+
     this.#zoom = zoom;
     this.#filters = filters;
     this.mapWrapper = mapProvider;
@@ -285,26 +286,10 @@ export default class LocationsMap {
       html += `<li>${this.generateLocationHTML(location)}</li>`;
     });
     html += '</ul>';
-    html += '<ul class="pagination"></ul>';
     this.locationList.innerHTML = html;
     this.locationList.id = 'locations-list';
 
-    // clear the old pagination
-    if (this.paginationList) {
-      this.paginationList.clear();
-      delete this.paginationList;
-      this.paginationList = null;
-    }
-
-    // initialize the pagination
-    if (this.settings.paginationSettings) {
-      if (this.#filteredLocations.length > this.settings.paginationSettings.page) {
-        this.paginationList = new List(
-          this.locationList,
-          this.settings.paginationSettings
-        );
-      }
-    }
+    this.paginationProvider?.paginate();
 
     this.dispatchEvent('updatedLocationListContent');
     return this;
@@ -579,48 +564,14 @@ export default class LocationsMap {
       }
     });
 
-    if (this.settings.autocomplete && this.searchInput) {
-      if (this.settings.autocomplete !== true && isFunction(this.settings.autocomplete)) {
-        this.autocomplete = this.settings.autocomplete({
-          getResults: this.getAutocompleteResults,
-          input: this.searchInput,
-          onSelect: (selected: SearchResult) => {
-            this.updateFromSearch(selected);
-          },
-        });
-      } else {
-        this.searchInput.autocomplete = 'off';
-        this.autocomplete = new autoComplete({
-          data: {
-            src: this.getAutocompleteResults,
-            key: ['title'],
-            cache: false,
-          },
-          trigger: {
-            event: ['input', 'submit'],
-          },
-          selector: () => this.searchInput,
-          threshold: 3,
-          debounce: 300,
-          diacritics: true,
-          searchEngine: () => true,
-          highlight: false,
-          maxResults: 10,
-          resultsList: {
-            render: true,
-          },
-          resultItem: {
-            content: (data, source) => {
-              source.innerHTML = `${data.value.title}`;
-            },
-            element: 'li',
-          },
-          onSelection: ({ selection: { value: selected } }) => {
-            this.updateFromSearch(selected.result);
-          },
-          ...(this.settings.autocompleteExtraSettings || {}),
-        });
-      }
+    if (this.searchInput) {
+      this.settings.autocompleteProvider?.setup({
+        getResults: this.getAutocompleteResults,
+        input: this.searchInput,
+        onSelect: (selected: SearchResult) => {
+          this.updateFromSearch(selected);
+        },
+      });
     }
   };
 
@@ -961,4 +912,11 @@ export default class LocationsMap {
   set zoom(value: number) {
     this.setZoom(value);
   }
+
+  /**
+   * get the locations list element
+   */
+  getLocationsList = (): HTMLElement | null => {
+    return this.locationList;
+  };
 }

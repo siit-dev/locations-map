@@ -17,6 +17,7 @@ const makeConfig = () => {
       main: ['./src/scss/main.scss'],
       app: ['./src/scss/app.scss'],
       leaflet: ['./src/scss/leaflet.scss'],
+      autocomplete: ['./src/scss/autocomplete.scss'],
     },
     output: {
       path: path.resolve(__dirname, '../dist/umd'),
