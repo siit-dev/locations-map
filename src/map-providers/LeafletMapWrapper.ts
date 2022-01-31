@@ -53,7 +53,7 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
 
   closeMarkerTooltip(): this {
     if (this.infoWindow) {
-      this.infoWindow.closePopup();
+      this.infoWindow.remove();
     }
     return this;
   }
@@ -126,7 +126,7 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
             iconAnchor:
               icon.iconAnchor ||
               (icon.anchor ? [icon.anchor.x, icon.anchor.y] : undefined),
-            iconSize: [30, 30],
+            iconSize: icon.iconSize || icon.size,
             ...icon,
           })
         : icon;
