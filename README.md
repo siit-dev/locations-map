@@ -12,6 +12,8 @@ npm install --save @smartimpact-it/locations-map
 
 ## How to use
 
+### HTML structure
+
 Inside your HTML, create a structure similar to this:
 
 ```html
@@ -96,7 +98,24 @@ Inside your HTML, create a structure similar to this:
 </locations-map-container>
 ```
 
+These elements will be used as following:
+
+- `locations-map-container` (required) - this is the wrapper around all the UI elements
+- `locations-map-target` (required) - will be used to display the map
+- `locations-map-list` - will be used to display the list of stores/locations (and optionally with pagination)
+- `locations-map-popup` - will be used to display outside the map the popups when clicking on a location. For example, if you want to display the popup in a different place on the page, not over the map, you can use this element (there can be multiple such elements) and use `preventDefault` on the `showPopupOnMap.locationsMap` event.
+- `template.template-results-single` - this is the template which will be used to display the header on the `locations-map-list`, containing the number of stores/locations displayed, when there is only one result
+- `template.template-results-multiple` - this is the template which will be used to display the header on the `locations-map-list`, containing the number of stores/locations displayed, when there are more than 1 result
+- `template.template-location` - this is used for the HTML markup for the items displayed in the `location-map-list`. Only required if you also have the `locations-map-list` element.
+- `template.template-popup-location` - used for the HTML markup for the popups. If you want to add a "close" button, add the `data-close-popup` attribute to it.
+- `form.data-location-search` - the form for searching for a location. It should also contain a `input[type="search"]` element, which is the input used for searching.
+- `[data-geolocate-trigger]` - buttons which can trigger the geolocation. They can be anywhere in the `locations-map-container` element, not necessarily in the form.
+
+Only the `locations-map-container`, `locations-map-target` and the templates are required. If you don't want to display specific elements, you can remove them.
+
 The placeholders above (`{{ postcode }}`, `{{ name }}` etc) will be replaced by the JavaScript library using the data from the stores/locations. These are keys that should also be present on the location objects.
+
+### The locations
 
 For example, your locations array could look like this (the `id`, `longitude` and `latitude` fields are mandatory; also `type` (string) or `filterTypes` (string[]) if you want to use filtering):
 
@@ -125,7 +144,7 @@ const locations = [
 ];
 ```
 
-Import the library in your Javascript files.
+**The `id`, `longitude` and `latitude` fields are mandatory. If you want to use filtering, also include the `type` (string) or `filterTypes` (string[]) fields.**
 
 ### Google Maps with Google Geocoder
 
@@ -198,19 +217,14 @@ if (container) {
   const searchProvider = new NominatimProvider();
 
   const locationsMapSettings = {
-    searchProvider,
-    mapProvider,
     latitude: 44.1,
     longitude: 10.3,
     zoom: 8,
     locations,
     displaySearch: true,
     filters: [],
-    focusedZoom: 17,
-    paginationSettings: {
-      page: 4,
-    },
-    focusOnHover: false,
+    searchProvider,
+    mapProvider,
   };
 
   const locationsMap = new LocationsMap(container, locationsMapSettings);
@@ -234,6 +248,8 @@ if (container) {
 | `focusOnHover`         | `false`       | Scroll to the hovered store on the map when hovering on the store in the list |
 | `filters`              | `[]`          | The initial set of active filters                                             |
 | `icon`                 |               | the icon to use, or a callback                                                |
+
+The settings can also be added directly on the `locations-map-container` element, inside a `data-settings` attribute (you should put a valid JSON here). The order of "precedence" for the settings are: 1) the default settings; 2) the settings added as `data-settings`; 3) the settings set directly when creating the `LocationsMap` object.
 
 The `icon` parameter can accept a callback to dynamically set the icon (for example, if you have different types or different icons if stores are selected).
 
@@ -296,6 +312,8 @@ You can setup pagination for the results list by using the `paginationProvider` 
 The library contains a default `Pagination` class, which uses [`list.js`](https://listjs.com/), but you can create your own pagination provider by implementing the `PaginationProvider` typescript interface.
 
 ```javascript
+import { Pagination } from '@smartimpact-it/locations-map';
+
 // These are the default settings for the list.js instance
 const settings = {
   page: 5,
