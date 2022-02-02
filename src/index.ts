@@ -10,8 +10,14 @@ export type { GoogleMapClusteredSettingsInterface } from './map-providers/Google
 
 export { default as GoogleMapsGeocoderProvider } from './search-providers/GoogleMapsGeocoderProvider';
 
-export { default as LeafletMapsWrapper } from './map-providers/LeafletMapWrapper';
-export { default as LeafletMapsClusteredWrapper } from './map-providers/LeafletMapClusteredWrapper';
+export {
+  default as LeafletMapsWrapper,
+  default as LeafletMapWrapper,
+} from './map-providers/LeafletMapWrapper';
+export {
+  default as LeafletMapsClusteredWrapper,
+  default as LeafletMapClusteredWrapper,
+} from './map-providers/LeafletMapClusteredWrapper';
 export { default as NominatimProvider } from './search-providers/NominatimProvider';
 
 export type {
