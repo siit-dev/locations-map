@@ -32,6 +32,7 @@ export const defaultSettings: LocationContainerSettings = {
   geolocateOnStart: true,
   scrollToGeolocation: false,
   focusOnClick: true,
+  openOnListClick: false,
   focusOnHover: false,
   focusOnHoverTimeout: 1000,
 };
@@ -51,6 +52,7 @@ export default class LocationsMap {
   #longitude: number;
   #zoom: number;
 
+  #markers: MapMarkerInterface[] = [];
   #locations: LocationData[] = [];
   #filteredLocations: LocationData[] = [];
   #filters: string[] | null = [];
@@ -519,7 +521,7 @@ export default class LocationsMap {
     this.initSearchForm();
 
     // trigger geolocation
-    if (navigator.geolocation) {
+    if (this.settings.geolocateOnStart && navigator.geolocation) {
       setTimeout(() => {
         navigator.geolocation.getCurrentPosition(position =>
           this.setMapPosition(position, true)
@@ -540,15 +542,22 @@ export default class LocationsMap {
    * create the map markers and the clusterer
    */
   protected createMapMarkers = () => {
-    const markers = this.#locations.map(location => {
+    this.#markers = this.#locations.map(location => {
       return {
         latitude: location.latitude as number,
         longitude: location.longitude as number,
         location,
       };
     });
-    return this.mapWrapper.addMapMarkers(markers);
+    return this.mapWrapper.addMapMarkers(this.#markers);
   };
+
+  /**
+   * get the markers info
+   **/
+  get mapMarkers() {
+    return this.#markers;
+  }
 
   /**
    * initialize the search form + autocomplete functionality
@@ -621,6 +630,20 @@ export default class LocationsMap {
   };
 
   /**
+   * Open a specific location
+   */
+  public openLocation = ({ id }: Partial<LocationData>): boolean => {
+    const marker = this.#markers.find(marker => marker.location.id == id);
+    if (!marker) {
+      return false;
+    }
+
+    this.onMarkerClick(marker);
+    this.focusOnLocation(marker.location);
+    return true;
+  };
+
+  /**
    * handle marker clicks
    */
   protected onMarkerClick = (marker: MapMarkerInterface) => {
@@ -689,13 +712,15 @@ export default class LocationsMap {
         },
       });
       if (allowed) {
-        if (this.settings.focusOnClick) {
+        if (this.settings.openOnListClick) {
+          this.openLocation(location);
+        } else if (this.settings.focusOnClick) {
           this.focusOnLocation(location);
         }
       }
     }
 
-    if (allowed) {
+    if (allowed && !this.settings.openOnListClick) {
       this.closePopups();
     }
   };
@@ -763,9 +788,8 @@ export default class LocationsMap {
    * @param location
    */
   focusOnLocation = (location: LocationData): this => {
-    this.mapWrapper.panTo(location);
     const zoom = this.settings.focusedZoom || 17;
-    setTimeout(() => this.mapWrapper.setZoom(zoom), 300);
+    this.mapWrapper.panTo(location, zoom);
     return this;
   };
 

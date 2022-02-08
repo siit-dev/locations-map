@@ -233,21 +233,22 @@ if (container) {
 
 ## Settings for the Locations Map class
 
-| Setting                | Default value | Description                                                                   |
-| ---------------------- | ------------- | ----------------------------------------------------------------------------- |
-| `latitude`             |               | the position on the map which will be displayed when first loaded             |
-| `longitude`            |               | the position on the map which will be displayed when first loaded             |
-| `mapProvider`          |               | the map provider (an instance of the map providers)                           |
-| `searchProvider`       |               | the search provider (if search is to be used)                                 |
-| `paginationProvider`   |               | the pagination provider (if pagination is to be used)                         |
-| `autocompleteProvider` |               | the autocomplete provider (if pagination is to be used)                       |
-| `zoom`                 | `8`           | initial zoom value                                                            |
-| `focusedZoom`          | `17`          | the zoom value when a location is focused                                     |
-| `geolocateOnStart`     | `true`        | Try to geolocate the current user when the map is displayed                   |
-| `scrollToGeolocation`  | `false`       | Scroll to the geolocated position when we apply geolocation                   |
-| `focusOnHover`         | `false`       | Scroll to the hovered store on the map when hovering on the store in the list |
-| `filters`              | `[]`          | The initial set of active filters                                             |
-| `icon`                 |               | the icon to use, or a callback                                                |
+| Setting                | Default value | Description                                                                              |
+| ---------------------- | ------------- | ---------------------------------------------------------------------------------------- |
+| `latitude`             |               | the position on the map which will be displayed when first loaded                        |
+| `longitude`            |               | the position on the map which will be displayed when first loaded                        |
+| `mapProvider`          |               | the map provider (an instance of the map providers)                                      |
+| `searchProvider`       |               | the search provider (if search is to be used)                                            |
+| `paginationProvider`   |               | the pagination provider (if pagination is to be used)                                    |
+| `autocompleteProvider` |               | the autocomplete provider (if pagination is to be used)                                  |
+| `zoom`                 | `8`           | initial zoom value                                                                       |
+| `focusedZoom`          | `17`          | the zoom value when a location is focused                                                |
+| `geolocateOnStart`     | `true`        | Try to geolocate the current user when the map is displayed                              |
+| `scrollToGeolocation`  | `false`       | Scroll to the geolocated position when we apply geolocation                              |
+| `focusOnHover`         | `false`       | Scroll to the hovered store on the map when hovering on the store in the list            |
+| `openOnListClick`      | `false`       | Scroll to the store on the map and open the popup when clicking on the store in the list |
+| `filters`              | `[]`          | The initial set of active filters                                                        |
+| `icon`                 |               | the icon to use, or a callback                                                           |
 
 The settings can also be added directly on the `locations-map-container` element, inside a `data-settings` attribute (you should put a valid JSON here). The order of "precedence" for the settings are: 1) the default settings; 2) the settings added as `data-settings`; 3) the settings set directly when creating the `LocationsMap` object.
 
@@ -302,6 +303,7 @@ const defaultSettings = {
   focusOnClick: true,
   focusOnHover: false,
   focusOnHoverTimeout: 1000,
+  openOnListClick: false,
 };
 ```
 

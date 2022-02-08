@@ -175,11 +175,15 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
     return this.mapMarkers;
   }
 
-  panTo(position: MapPositionInterface): this {
+  panTo(position: MapPositionInterface, zoom: number | null): this {
     this.map.panTo({
       lat: position.latitude,
       lng: position.longitude,
     });
+    if (zoom) {
+      setTimeout(() => this.setZoom(zoom), 300);
+    }
+
     return this;
   }
 

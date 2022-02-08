@@ -78,6 +78,8 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxNativeZoom: 18,
+      maxZoom: 24,
     }).addTo(this.map);
     return this.map;
   }
@@ -176,11 +178,17 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
     return this.mapMarkers;
   }
 
-  panTo(position: MapPositionInterface): this {
-    this.map.panTo({
-      lat: position.latitude,
-      lng: position.longitude,
-    });
+  panTo(position: MapPositionInterface, zoom: number | null): this {
+    this.map.flyTo(
+      {
+        lat: position.latitude,
+        lng: position.longitude,
+      },
+      zoom,
+      {
+        duration: 0.3,
+      }
+    );
     return this;
   }
 

@@ -34,7 +34,7 @@ export default interface MapsWrapperInterface {
   highlightMapMarker: (marker: MapMarkerInterface) => this;
   unhighlightMarkers: () => this;
 
-  panTo: (position: MapPositionInterface) => this;
+  panTo: (position: MapPositionInterface, zoom?: number | null) => this;
   setZoom: (zoom: number) => this;
 
   displayMarkerTooltip: (marker: MapMarkerInterface, content: string) => this;
