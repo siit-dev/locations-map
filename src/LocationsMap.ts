@@ -872,11 +872,13 @@ export default class LocationsMap {
       coords: result,
     });
 
-    this.mapWrapper.panTo({
-      latitude: this.#latitude,
-      longitude: this.#longitude,
-    });
-    this.mapWrapper.setZoom(this.settings.focusedAreaZoom || 10);
+    this.mapWrapper.panTo(
+      {
+        latitude: this.#latitude,
+        longitude: this.#longitude,
+      },
+      this.settings.focusedAreaZoom || 10
+    );
     this.updateContent();
 
     this.dispatchEvent('updatedFromSearch', { detail: { result } });
@@ -890,11 +892,13 @@ export default class LocationsMap {
     const searchValue = this.searchInput ? this.searchInput.value : '';
 
     if (!searchValue.trim().length && this.geolocalized) {
-      this.mapWrapper.panTo({
-        latitude: this.#latitude,
-        longitude: this.#longitude,
-      });
-      setTimeout(() => this.mapWrapper.setZoom(6), 600);
+      this.mapWrapper.panTo(
+        {
+          latitude: this.#latitude,
+          longitude: this.#longitude,
+        },
+        this.settings.zoom
+      );
       this.geolocalized = false;
 
       this.updateContent();
