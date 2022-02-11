@@ -2,6 +2,7 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const postcssConfig = require('./postcss.config');
+const babelConfig = require('../babel.config');
 
 const makeConfig = () => {
   const plugins = [
@@ -22,7 +23,6 @@ const makeConfig = () => {
     output: {
       path: path.resolve(__dirname, '../dist/umd'),
       filename: '[name].js',
-      library: 'locationsMap',
       libraryTarget: 'umd',
       globalObject: 'this',
     },
@@ -36,8 +36,8 @@ const makeConfig = () => {
             {
               loader: 'babel-loader',
               options: {
-                babelrc: true,
                 cacheDirectory: true,
+                ...babelConfig,
               },
             },
           ],
