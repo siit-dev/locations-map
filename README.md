@@ -115,6 +115,8 @@ Only the `locations-map-container`, `locations-map-target` and the templates are
 
 The placeholders above (`{{ postcode }}`, `{{ name }}` etc) will be replaced by the JavaScript library using the data from the stores/locations. These are keys that should also be present on the location objects.
 
+Also, the placeholders `{{ distance }}` and `{{ distance_km }}` will be replaced with the distance from the client position (if geolocated, or if a search provider option has been selected).
+
 ### The locations
 
 For example, your locations array could look like this (the `id`, `longitude` and `latitude` fields are mandatory; also `type` (string) or `filterTypes` (string[]) if you want to use filtering):

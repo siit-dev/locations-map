@@ -325,21 +325,28 @@ export default class LocationsMap {
    * replace placeholders with location data inside html templates
    */
   protected replaceHTMLPlaceholders = (html: string, location: LocationData): string => {
+    const getDistance = (value: number): string | null => {
+      let formattedValue = null;
+      if (this.hasClientAddress || this.settings.alwaysDisplayDistance) {
+        value =
+          value > 20 ? Math.round(value) : Math.round((value + Number.EPSILON) * 10) / 10;
+        formattedValue = value.toLocaleString(document.documentElement.lang);
+      }
+
+      return formattedValue;
+    };
+
     for (let key in location) {
       let value = location[key];
 
       // Calculate the distance, if needed.
       if (key == 'distance') {
-        if (this.hasClientAddress || this.settings.alwaysDisplayDistance) {
-          value =
-            value > 20
-              ? Math.round(value)
-              : Math.round((location[key] + Number.EPSILON) * 10) / 10;
-          value = value.toLocaleString(document.documentElement.lang);
-        } else {
-          value = '';
-        }
+        value = getDistance(value) || '';
+      } else if (key == 'distance_km') {
+        const distance = getDistance(value);
+        value = distance ? `${distance} km` : '';
       }
+
       html = html
         .replaceAll(`{{ ${key} }}`, (value || '').toString())
         .replaceAll(`{{${key}}}`, (value || '').toString());
