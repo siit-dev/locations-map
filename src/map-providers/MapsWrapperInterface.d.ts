@@ -37,6 +37,11 @@ export default interface MapsWrapperInterface {
   panTo: (position: MapPositionInterface, zoom?: number | null) => this;
   setZoom: (zoom: number) => this;
 
+  /**
+   * Zoom to the bounds of the map markers
+   */
+  zoomToContent: () => this;
+
   displayMarkerTooltip: (marker: MapMarkerInterface, content: string) => this;
   closeMarkerTooltip: () => this;
 }

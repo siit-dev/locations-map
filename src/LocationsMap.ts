@@ -48,6 +48,7 @@ export default class LocationsMap {
   protected displaySearch = true;
 
   protected geolocalized = false;
+  public hasClientAddress = false;
   #latitude: number;
   #longitude: number;
   #zoom: number;
@@ -158,6 +159,13 @@ export default class LocationsMap {
     this.#locations = this.parseLocations(locations);
 
     this.init();
+  }
+
+  /**
+   * Get the actual underlying map wrapper.
+   */
+  public getMapWrapper(): MapsWrapperInterface {
+    return this.mapWrapper;
   }
 
   /**
@@ -319,12 +327,18 @@ export default class LocationsMap {
   protected replaceHTMLPlaceholders = (html: string, location: LocationData): string => {
     for (let key in location) {
       let value = location[key];
+
+      // Calculate the distance, if needed.
       if (key == 'distance') {
-        value =
-          value > 20
-            ? Math.round(value)
-            : Math.round((location[key] + Number.EPSILON) * 10) / 10;
-        value = value.toLocaleString(document.documentElement.lang);
+        if (this.hasClientAddress || this.settings.alwaysDisplayDistance) {
+          value =
+            value > 20
+              ? Math.round(value)
+              : Math.round((location[key] + Number.EPSILON) * 10) / 10;
+          value = value.toLocaleString(document.documentElement.lang);
+        } else {
+          value = '';
+        }
       }
       html = html
         .replaceAll(`{{ ${key} }}`, (value || '').toString())
@@ -824,6 +838,7 @@ export default class LocationsMap {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           position => {
+            this.hasClientAddress = true;
             this.setMapPosition(position);
             resolve(position);
           },
@@ -871,6 +886,7 @@ export default class LocationsMap {
     this.setMapPosition({
       coords: result,
     });
+    this.hasClientAddress = true;
 
     this.mapWrapper.panTo(
       {
@@ -911,6 +927,13 @@ export default class LocationsMap {
   };
 
   /**
+   * Get the search provider.
+   */
+  getSearchProvider(): SearchProvider | null {
+    return this.searchProvider;
+  }
+
+  /**
    * get the results for the autocomplete dropdown
    */
   protected getAutocompleteResults = async () => {
@@ -940,6 +963,11 @@ export default class LocationsMap {
   set zoom(value: number) {
     this.setZoom(value);
   }
+
+  zoomToContent = (): this => {
+    this.mapWrapper.zoomToContent();
+    return this;
+  };
 
   /**
    * get the locations list element

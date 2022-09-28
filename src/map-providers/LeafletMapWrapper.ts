@@ -196,4 +196,10 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
     this.map.setZoom(zoom);
     return this;
   }
+
+  zoomToContent(): this {
+    const group = L.featureGroup(this.mapMarkers);
+    this.map.fitBounds(group.getBounds().pad(0.5));
+    return this;
+  }
 }

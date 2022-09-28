@@ -191,4 +191,14 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
     this.map.setZoom(zoom);
     return this;
   }
+
+  zoomToContent(): this {
+    // Zoom to the bounds of the markers
+    const bounds = new google.maps.LatLngBounds();
+    this.mapMarkers.forEach(marker => {
+      bounds.extend(marker.getPosition());
+    });
+    this.map.fitBounds(bounds);
+    return this;
+  }
 }

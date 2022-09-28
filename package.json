@@ -29,7 +29,7 @@
   ],
   "scripts": {
     "test": "jest",
-    "watch": "webpack --progress --watch --color",
+    "watch": "webpack --config config/webpack.config.js --progress --watch --color",
     "format": "prettier --write \"src/**/**.{js,ts}\" \"**/*.md\"",
     "format:check": "prettier --list-different \"src/**/**.{js,ts}\" \"**/*.md\"",
     "pretest": "npm run build",

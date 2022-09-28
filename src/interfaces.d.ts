@@ -53,6 +53,7 @@ export interface LocationContainerSettings {
   focusOnClick?: boolean;
   focusOnHover?: boolean;
   focusOnHoverTimeout?: number;
+  alwaysDisplayDistance?: boolean;
   [key: string]: any;
 }
 
