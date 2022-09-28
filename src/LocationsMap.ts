@@ -417,15 +417,17 @@ export default class LocationsMap {
   updateLocationsDistanceAndStatus = (): void => {
     this.#locations = this.#locations
       .map(location => {
+        const distanceValue = distance(
+          location.latitude,
+          location.longitude,
+          this.#latitude,
+          this.#longitude,
+          'K'
+        );
         return {
           ...location,
-          distance: distance(
-            location.latitude,
-            location.longitude,
-            this.#latitude,
-            this.#longitude,
-            'K'
-          ),
+          distance: distanceValue,
+          distance_km: distanceValue,
         };
       })
       .sort((a, b) => a.distance - b.distance);
