@@ -546,9 +546,11 @@ export default class LocationsMap {
     // trigger geolocation
     if (this.settings.geolocateOnStart && navigator.geolocation) {
       setTimeout(() => {
-        navigator.geolocation.getCurrentPosition(position =>
-          this.setMapPosition(position, true)
-        );
+        navigator.geolocation.getCurrentPosition(position => {
+          if (this.dispatchEvent('geolocated', { detail: { position } })) {
+            this.setMapPosition(position, true);
+          }
+        });
       }, 2500);
     }
 
@@ -849,6 +851,9 @@ export default class LocationsMap {
           position => {
             this.hasClientAddress = true;
             this.setMapPosition(position);
+            if (this.dispatchEvent('geolocated', { detail: { position } })) {
+              this.setMapPosition(position);
+            }
             resolve(position);
           },
           error => {
@@ -859,7 +864,9 @@ export default class LocationsMap {
         );
       } else {
         reject('Not available');
-        alert('Geolocation not available');
+        if (this.dispatchEvent('geolocationFailed')) {
+          alert('Geolocation not available');
+        }
       }
     });
   };

@@ -388,7 +388,8 @@ There are multiple events dispatched by the location map:
 - `search.locationsMap` (cancelable) - when the search form is submitted, before starting the search
 - `updatingFromSearch.locationsMap` (cancelable) - when search is starting
 - `updatedFromSearch.locationsMap` after search has been done
-- `showPopup` (cancelable) - when a location is clicked and a popup should be displayed
+- `geolocated.locationsMap` (cancelable) - after geolocation has been successful.
+- `showPopup.locationsMap` (cancelable) - when a location is clicked and a popup should be displayed
 - `showPopupOnMap.locationsMap` (cancelable) - when a location is clicked and a popup should be displayed on the map
 - `showPopupOutsideMap.locationsMap` (cancelable) - when a location is clicked and a popup should be displayed outside the map
 - `listClick.locationsMap` (cancelable) - when a location is clicked in the list, and the map should scroll to it and close existing popups
