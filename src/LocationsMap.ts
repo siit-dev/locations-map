@@ -850,7 +850,6 @@ export default class LocationsMap {
         navigator.geolocation.getCurrentPosition(
           position => {
             this.hasClientAddress = true;
-            this.setMapPosition(position);
             if (this.dispatchEvent('geolocated', { detail: { position } })) {
               this.setMapPosition(position);
             }
