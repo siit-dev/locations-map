@@ -7,8 +7,7 @@ export interface AutocompleteSetupSettings {
 }
 
 export interface AutocompleteProvider {
-  parent: LocationsMap;
-
+  parent: LocationsMap | null;
   input: HTMLInputElement | null;
 
   setParent: (parent: LocationsMap) => this;

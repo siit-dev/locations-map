@@ -1,18 +1,24 @@
 import $ from 'jquery';
 import { AutocompleteResult, SearchProvider, SearchResult } from '../interfaces';
 
+interface NominatimResult {
+  lat: number;
+  lon: number;
+  display_name: string;
+}
+
 export default class NominatimProvider implements SearchProvider {
   results: SearchResult[] = [];
 
   _callAPI = (url: string): Promise<SearchResult[]> => {
     return new Promise((resolve, reject) => {
-      $.get(window.location.protocol + url, data => {
+      $.get(window.location.protocol + url, (data) => {
         if (!data[0]) {
           this.results = [];
           resolve([]);
         }
 
-        this.results = data.map(item => {
+        this.results = data.map((item: NominatimResult) => {
           return {
             latitude: parseFloat(item.lat.toString()),
             longitude: parseFloat(item.lon.toString()),
@@ -21,7 +27,7 @@ export default class NominatimProvider implements SearchProvider {
           };
         });
         resolve(this.results);
-      }).catch(e => {
+      }).catch((e) => {
         this.results = [];
         reject(e);
       });
@@ -39,7 +45,7 @@ export default class NominatimProvider implements SearchProvider {
   };
 
   getAutocompleteData = (): AutocompleteResult[] => {
-    return this.results.map(result => {
+    return this.results.map((result) => {
       return {
         title: result.name,
         result,

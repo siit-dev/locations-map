@@ -2,7 +2,7 @@
 /// <reference path="../node_modules/@types/leaflet/index.d.ts" />
 
 import { MarkerClustererOptions } from '@googlemaps/markerclustererplus';
-import { AutocompleteProvider } from '.';
+import { AutocompleteProvider, GoogleIcon } from '.';
 import MapsWrapperInterface from './map-providers/MapsWrapperInterface';
 import { PaginationProvider } from '.';
 
@@ -23,15 +23,9 @@ export interface IndexedLocationData {
 
 export type IconCallback = (
   location: LocationData,
-  selected?: boolean
-) => string | google.maps.Icon | google.maps.Symbol | L.Icon | L.DivIcon;
-export type Icon =
-  | IconCallback
-  | string
-  | google.maps.Icon
-  | google.maps.Symbol
-  | L.Icon
-  | L.DivIcon;
+  selected?: boolean,
+) => string | GoogleIcon | google.maps.Symbol | L.Icon | L.DivIcon;
+export type Icon = IconCallback | string | GoogleIcon | google.maps.Symbol | L.Icon | L.DivIcon;
 
 export interface LocationContainerSettings {
   latitude: number;
@@ -41,12 +35,12 @@ export interface LocationContainerSettings {
   focusedZoom?: number;
   focusedAreaZoom?: number;
   displaySearch?: boolean;
-  mapProvider: MapsWrapperInterface;
-  searchProvider?: SearchProvider;
-  paginationProvider?: PaginationProvider;
-  autocompleteProvider?: AutocompleteProvider;
+  mapProvider?: MapsWrapperInterface | null;
+  searchProvider?: SearchProvider | null;
+  paginationProvider?: PaginationProvider | null;
+  autocompleteProvider?: AutocompleteProvider | null;
   filters?: string[];
-  icon?: Icon;
+  icon?: Icon | null;
   clusterSettings?: MarkerClustererOptions;
   geolocateOnStart?: boolean;
   scrollToGeolocation?: boolean;

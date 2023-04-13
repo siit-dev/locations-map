@@ -1,3 +1,4 @@
+import { GoogleIcon } from '..';
 import { Icon, LocationData } from '../interfaces';
 import LocationsMap from '../LocationsMap';
 
@@ -13,17 +14,17 @@ export interface MapMarkerInterface extends MapPositionInterface {
 }
 
 export interface MapSettingsInterface {
-  latitude?: number;
-  longitude?: number;
+  latitude: number;
+  longitude: number;
   zoom?: number;
-  icon?: Icon;
+  icon?: Icon | L.IconOptions | GoogleIcon | null;
   [key: string]: any;
 }
 
 export default interface MapsWrapperInterface {
   map?: any;
-  mapMarkers?: any;
-  parent?: LocationsMap;
+  mapMarkers?: any[];
+  parent?: LocationsMap | null;
 
   initializeMap: (elementId?: string, settings?: MapSettingsInterface) => Promise<any>;
   setParent: (parent: LocationsMap) => this;

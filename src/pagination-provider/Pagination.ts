@@ -11,8 +11,8 @@ export const defaultSettings: PaginationSettings = {
 };
 
 export default class Pagination implements PaginationProvider {
-  protected paginationList?: List = null;
-  parent: LocationsMap;
+  protected paginationList?: List | null = null;
+  parent: LocationsMap | null = null;
 
   constructor(protected settings: PaginationSettings = defaultSettings) {}
 
@@ -25,7 +25,7 @@ export default class Pagination implements PaginationProvider {
     // clear the old pagination
     this.clear();
 
-    const locationList = this.parent.getLocationsList();
+    const locationList = this.parent?.getLocationsList();
     if (!locationList) return this;
 
     if (!locationList.querySelector('ul.pagination')) {
@@ -33,7 +33,7 @@ export default class Pagination implements PaginationProvider {
     }
 
     // initialize the pagination
-    if (this.parent.filteredLocations.length > this.settings.page) {
+    if (this.parent && this.parent.filteredLocations.length > (this.settings.page || 0)) {
       this.paginationList = new List(locationList, this.settings);
     }
 
@@ -47,7 +47,7 @@ export default class Pagination implements PaginationProvider {
     delete this.paginationList;
     this.paginationList = null;
 
-    const locationList = this.parent.getLocationsList();
+    const locationList = this.parent?.getLocationsList();
     if (locationList) {
       const pagination = locationList.querySelector('ul.pagination');
       if (pagination) {

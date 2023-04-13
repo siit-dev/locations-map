@@ -14,21 +14,22 @@ export default class GoogleMapsGeocoderProvider implements SearchProvider {
         },
         (results, status) => {
           if (status == google.maps.GeocoderStatus.OK) {
-            this.results = results.map(item => {
-              const location = item.geometry.location;
-              return {
-                latitude: parseFloat(location.lat().toString()),
-                longitude: parseFloat(location.lng().toString()),
-                name: item.formatted_address,
-                originalInfo: item,
-              };
-            });
+            this.results =
+              results?.map((item) => {
+                const location = item.geometry.location;
+                return {
+                  latitude: parseFloat(location.lat().toString()),
+                  longitude: parseFloat(location.lng().toString()),
+                  name: item.formatted_address,
+                  originalInfo: item,
+                };
+              }) || [];
             resolve(this.results);
           } else {
             this.results = [];
             reject({ results, status });
           }
-        }
+        },
       );
     });
   };
@@ -42,7 +43,7 @@ export default class GoogleMapsGeocoderProvider implements SearchProvider {
   };
 
   getAutocompleteData = (): AutocompleteResult[] => {
-    return this.results.map(result => {
+    return this.results.map((result) => {
       return {
         title: result.name,
         result,

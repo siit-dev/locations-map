@@ -1,4 +1,4 @@
-export function distance(lat1, lon1, lat2, lon2, unit) {
+export function distance(lat1: number, lon1: number, lat2: number, lon2: number, unit: string) {
   if (lat1 == lat2 && lon1 == lon2) {
     return 0;
   } else {
@@ -6,9 +6,7 @@ export function distance(lat1, lon1, lat2, lon2, unit) {
     const radlat2 = (Math.PI * lat2) / 180;
     const theta = lon1 - lon2;
     const radtheta = (Math.PI * theta) / 180;
-    let dist =
-      Math.sin(radlat1) * Math.sin(radlat2) +
-      Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+    let dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
     if (dist > 1) {
       dist = 1;
     }
@@ -24,41 +22,3 @@ export function distance(lat1, lon1, lat2, lon2, unit) {
     return dist;
   }
 }
-
-export function sortProperties(obj, sortedBy, isNumericSort, reverse) {
-  sortedBy = sortedBy || 1; // by default first key
-  isNumericSort = isNumericSort || false; // by default text sort
-  reverse = reverse || false; // by default no reverse
-
-  const reversed = reverse ? -1 : 1;
-
-  const sortable = [];
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      sortable.push([key, obj[key]]);
-    }
-  }
-  if (isNumericSort)
-    sortable.sort(function (a, b) {
-      return reversed * (a[1][sortedBy] - b[1][sortedBy]);
-    });
-  else
-    sortable.sort(function (a, b) {
-      const x = a[1][sortedBy].toLowerCase(),
-        y = b[1][sortedBy].toLowerCase();
-      return x < y ? reversed * -1 : x > y ? reversed : 0;
-    });
-  return sortable.map(item => item[1]);
-}
-
-export const dateWithTimeZone = (timeZone, year, month, day, hour, minute, second) => {
-  let date = new Date(Date.UTC(year, month, day, hour, minute, second));
-
-  let utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
-  let tzDate = new Date(date.toLocaleString('en-US', { timeZone: timeZone }));
-  let offset = utcDate.getTime() - tzDate.getTime();
-
-  date.setTime(date.getTime() + offset);
-
-  return date;
-};

@@ -1,30 +1,40 @@
 import { LocationsMap, AutocompleteProvider, AutocompleteSetupSettings } from '..';
-import autoComplete from '@tarekraafat/autocomplete.js';
+import autoComplete, { AutoCompleteConfig } from '@tarekraafat/autocomplete.js';
 
-export const defaultSettings = {
-  trigger: {
-    event: ['input', 'submit'],
-  },
+declare global {
+  interface ElementEventMap {
+    selection: CustomEvent<{
+      event: Event;
+      query: string;
+      matches: any[];
+      selection: {
+        index: number;
+        key: string;
+        match: string;
+        value: Record<string, any>;
+      };
+    }>;
+  }
+}
+
+export const defaultSettings: Partial<AutoCompleteConfig> = {
   threshold: 3,
   debounce: 300,
   diacritics: true,
   searchEngine: () => true,
-  highlight: false,
-  maxResults: 10,
   resultsList: {
-    render: true,
+    maxResults: 10,
   },
   resultItem: {
-    content: (data, source) => {
+    element: (source: HTMLElement, data: any) => {
       source.innerHTML = `${data.value.title}`;
     },
-    element: 'li',
   },
 };
 
 export default class Autocomplete implements AutocompleteProvider {
-  parent: LocationsMap;
-  input: HTMLInputElement = null;
+  parent: LocationsMap | null = null;
+  input: HTMLInputElement | null = null;
   autocomplete?: any = null;
   protected settings = {};
 
@@ -42,17 +52,24 @@ export default class Autocomplete implements AutocompleteProvider {
 
   setup = ({ getResults, input, onSelect }: AutocompleteSetupSettings): this => {
     this.input = input;
+    if (!this.input) {
+      throw new Error('Autocomplete input is not defined');
+    }
+
     this.input.autocomplete = 'off';
 
     this.autocomplete = new autoComplete({
       data: {
         src: getResults,
-        key: ['title'],
+        keys: ['title'],
         cache: false,
       },
       selector: () => this.input,
-      onSelection: ({ selection: { value: selected } }) => onSelect(selected.result),
       ...this.settings,
+    });
+
+    this.input.addEventListener('selection', (event) => {
+      onSelect(event.detail.selection.value[event.detail.selection.key]);
     });
 
     return this;

@@ -1,7 +1,5 @@
 import { distance } from './utils/locations-utils';
-import MapsWrapperInterface, {
-  MapMarkerInterface,
-} from './map-providers/MapsWrapperInterface';
+import MapsWrapperInterface, { MapMarkerInterface } from './map-providers/MapsWrapperInterface';
 import {
   SearchProvider,
   SearchResult,
@@ -12,13 +10,12 @@ import {
   AutocompleteProvider,
 } from '.';
 
-export const defaultSettings: LocationContainerSettings = {
+export const defaultSettings = {
   latitude: 0,
   longitude: 0,
   zoom: 6,
   locations: [],
   displaySearch: false,
-  mapProvider: null,
   searchProvider: null,
   paginationProvider: null,
   autocompleteProvider: null,
@@ -35,7 +32,7 @@ export const defaultSettings: LocationContainerSettings = {
   openOnListClick: false,
   focusOnHover: false,
   focusOnHoverTimeout: 1000,
-};
+} satisfies Partial<LocationContainerSettings>;
 
 /**
  * the class to handle the location map
@@ -56,33 +53,33 @@ export default class LocationsMap {
   #markers: MapMarkerInterface[] = [];
   #locations: LocationData[] = [];
   #filteredLocations: LocationData[] = [];
-  #filters: string[] | null = [];
+  #filters: string[] = [];
 
-  protected mapWrapper: MapsWrapperInterface;
-  protected searchProvider: SearchProvider | null;
-  protected paginationProvider: PaginationProvider | null;
-  protected autocompleteProvider: AutocompleteProvider | null;
+  protected mapWrapper?: MapsWrapperInterface | null;
+  protected searchProvider?: SearchProvider | null;
+  protected paginationProvider?: PaginationProvider | null;
+  protected autocompleteProvider?: AutocompleteProvider | null;
 
   protected uiContainer: HTMLElement;
-  protected locationList?: HTMLElement;
-  protected searchForm?: HTMLFormElement;
-  protected searchInput?: HTMLInputElement;
-  protected popupContainers?: HTMLElement[];
+  protected locationList?: HTMLElement | null;
+  protected searchForm?: HTMLFormElement | null;
+  protected searchInput?: HTMLInputElement | null;
+  protected popupContainers: HTMLElement[] = [];
 
-  selectedMarker?: MapMarkerInterface;
-  hoveredLocation?: LocationData = null;
+  selectedMarker?: MapMarkerInterface | null = null;
+  hoveredLocation?: LocationData | null = null;
 
   /**
    * make a new instance of LocationMap, or return an existing one for that same HTMLElement
    */
-  static make(
-    element: HTMLElement = null,
-    settings: Partial<LocationContainerSettings> = {}
-  ): LocationsMap {
+  static make(element: HTMLElement | null = null, settings: Partial<LocationContainerSettings> = {}): LocationsMap {
     element = element || document.querySelector('locations-map-container');
+    if (!element) {
+      throw new Error('Missing UI container for the LocationsMap!');
+    }
 
     if (this.instances.has(element)) {
-      return this.instances.get(element);
+      return this.instances.get(element)!;
     }
 
     const newInstance = new this(element, settings);
@@ -98,31 +95,25 @@ export default class LocationsMap {
       return null;
     }
 
-    return this.instances.get(element);
+    return this.instances.get(element)!;
   }
 
-  constructor(
-    element: HTMLElement = null,
-    extraSettings: Partial<LocationContainerSettings> = {}
-  ) {
-    this.uiContainer = element || document.querySelector('locations-map-container');
-    if (!this.uiContainer) {
+  constructor(element: HTMLElement | null = null, extraSettings: Partial<LocationContainerSettings> = {}) {
+    element = element || document.querySelector('locations-map-container');
+    if (!element) {
       throw new Error('Missing UI container for the LocationsMap!');
     }
 
+    this.uiContainer = element;
     this.locationList = this.uiContainer.querySelector('locations-map-list');
     this.searchForm = this.uiContainer.querySelector('[data-location-search]');
-    this.popupContainers = [
-      ...this.uiContainer.querySelectorAll('locations-map-popup'),
-    ] as HTMLElement[];
+    this.popupContainers = [...this.uiContainer.querySelectorAll('locations-map-popup')] as HTMLElement[];
     this.searchInput = this.searchForm
       ? (this.searchForm.querySelector('input[type="search"]') as HTMLInputElement)
       : null;
 
     const settings = this.uiContainer.dataset.settings
-      ? (JSON.parse(
-          this.uiContainer.dataset.settings
-        ) as Partial<LocationContainerSettings>)
+      ? (JSON.parse(this.uiContainer.dataset.settings) as Partial<LocationContainerSettings>)
       : {};
     this.settings = {
       ...defaultSettings,
@@ -144,16 +135,16 @@ export default class LocationsMap {
 
     this.#latitude = latitude;
     this.#longitude = longitude;
-    this.displaySearch = displaySearch && !!this.searchProvider;
     this.searchProvider = searchProvider;
+    this.displaySearch = !!displaySearch && !!this.searchProvider;
 
     this.paginationProvider = paginationProvider;
     this.paginationProvider?.setParent(this);
     this.autocompleteProvider = autocompleteProvider;
     this.autocompleteProvider?.setParent(this);
 
-    this.#zoom = zoom;
-    this.#filters = filters;
+    this.#zoom = zoom || defaultSettings.zoom;
+    this.#filters = filters || defaultSettings.filters;
     this.mapWrapper = mapProvider;
 
     this.#locations = this.parseLocations(locations);
@@ -165,6 +156,10 @@ export default class LocationsMap {
    * Get the actual underlying map wrapper.
    */
   public getMapWrapper(): MapsWrapperInterface {
+    if (!this.mapWrapper) {
+      throw new Error('No map wrapper found!');
+    }
+
     return this.mapWrapper;
   }
 
@@ -172,7 +167,7 @@ export default class LocationsMap {
    * parse the locations and fix their latitude/longitude
    */
   protected parseLocations(locations: LocationData[]): LocationData[] {
-    locations = locations.map(location => {
+    locations = locations.map((location) => {
       location = {
         ...location,
         latitude: parseFloat(location.latitude.toString()),
@@ -183,15 +178,14 @@ export default class LocationsMap {
       const threshold = 0.0001;
       const overlappingLocation = location.latitude
         ? locations.find(
-            item =>
+            (item) =>
               Math.abs(item.latitude - location.latitude) < threshold &&
               Math.abs(item.longitude - location.longitude) < threshold &&
-              item.id < location.id
+              item.id < location.id,
           )
         : false;
       if (overlappingLocation) {
-        location.latitude +=
-          threshold * (overlappingLocation.latitude > location.latitude ? -1 : 1);
+        location.latitude += threshold * (overlappingLocation.latitude > location.latitude ? -1 : 1);
         // console.log('fixing location overlap', location, overlappingLocation);
       }
 
@@ -211,7 +205,7 @@ export default class LocationsMap {
    * set the filters
    */
   setFilters(filters: string[] | null): this {
-    this.applyFilters(filters);
+    this.applyFilters(filters || []);
     if (this.displaySearch) {
       this.updateLocationsListContent();
     }
@@ -261,15 +255,19 @@ export default class LocationsMap {
    * close the location popups
    */
   closePopups(): this {
+    if (!this.mapWrapper) {
+      throw new Error('No map wrapper found!');
+    }
+
     this.selectedMarker = null;
     this.mapWrapper.closeMarkerTooltip();
     this.mapWrapper.unhighlightMarkers();
-    this.popupContainers.forEach(container => {
+    this.popupContainers.forEach((container) => {
       container.innerHTML = '';
     });
     if (this.locationList) {
-      [...this.locationList.querySelectorAll('.location-wrapper.in-focus')].forEach(
-        item => item.classList.remove('in-focus')
+      [...this.locationList.querySelectorAll('.location-wrapper.in-focus')].forEach((item) =>
+        item.classList.remove('in-focus'),
       );
     }
     return this;
@@ -292,7 +290,7 @@ export default class LocationsMap {
     let html = '';
     html += this.generateResultsCount(this.#filteredLocations.length);
     html += '<ul class="list locations-list-inner">';
-    this.#filteredLocations.forEach(location => {
+    this.#filteredLocations.forEach((location) => {
       html += `<li>${this.generateLocationHTML(location)}</li>`;
     });
     html += '</ul>';
@@ -310,9 +308,7 @@ export default class LocationsMap {
    */
   protected generateResultsCount = (count: number): string => {
     let html = '';
-    const template = document.querySelector(
-      `template.template-results-${count > 1 ? 'multiple' : 'single'}`
-    );
+    const template = document.querySelector(`template.template-results-${count > 1 ? 'multiple' : 'single'}`);
     if (template) {
       html = template.innerHTML.replace('{{ results }}', count.toString());
     }
@@ -328,8 +324,7 @@ export default class LocationsMap {
     const getDistance = (value: number): string | null => {
       let formattedValue = null;
       if (this.hasClientAddress || this.settings.alwaysDisplayDistance) {
-        value =
-          value > 20 ? Math.round(value) : Math.round((value + Number.EPSILON) * 10) / 10;
+        value = value > 20 ? Math.round(value) : Math.round((value + Number.EPSILON) * 10) / 10;
         formattedValue = value.toLocaleString(document.documentElement.lang);
       }
 
@@ -366,14 +361,12 @@ export default class LocationsMap {
     const selector = location.type
       ? `template.template-location[data-location-type="${location.type}"]`
       : defaultSelector;
-    const template =
-      document.querySelector(selector) || document.querySelector(defaultSelector);
+    const template = document.querySelector(selector) || document.querySelector(defaultSelector);
 
     // replace placeholders
     if (template) {
       const innerHtml = this.replaceHTMLPlaceholders(template.innerHTML, location);
-      const isSelected =
-        this.selectedMarker && this.selectedMarker.location.id == location.id;
+      const isSelected = this.selectedMarker && this.selectedMarker?.location?.id == location.id;
       const html = `<div class="location-wrapper location-item-wrapper${
         isSelected ? ' in-focus' : ''
       }" data-property="${location.id}" data-type="${location.type}">${innerHtml}</div>`;
@@ -395,8 +388,7 @@ export default class LocationsMap {
     const selector = location.type
       ? `template.template-popup-location[data-location-type="${location.type}"]`
       : defaultSelector;
-    const template =
-      document.querySelector(selector) || document.querySelector(defaultSelector);
+    const template = document.querySelector(selector) || document.querySelector(defaultSelector);
 
     // replace placeholders
     if (template) {
@@ -416,14 +408,8 @@ export default class LocationsMap {
    */
   updateLocationsDistanceAndStatus = (): void => {
     this.#locations = this.#locations
-      .map(location => {
-        const distanceValue = distance(
-          location.latitude,
-          location.longitude,
-          this.#latitude,
-          this.#longitude,
-          'K'
-        );
+      .map((location) => {
+        const distanceValue = distance(location.latitude, location.longitude, this.#latitude, this.#longitude, 'K');
         return {
           ...location,
           distance: distanceValue,
@@ -442,26 +428,27 @@ export default class LocationsMap {
   /**
    * Apply new filters on the locations to be displayed.
    */
-  protected applyFilters = (filters: string[] = null): this => {
+  protected applyFilters = (filters: string[]|null = null): this => {
     if (filters !== null) {
       this.#filters = filters;
     }
 
-    this.#filteredLocations = this.#locations.filter(location => {
+    this.#filteredLocations = this.#locations.filter((location) => {
       if (!this.#filters.length) return true;
 
       // allow using either the `filterTypes` or the `type` properties
       const types = location.filterTypes ?? location.type;
       if (Array.isArray(types)) {
-        return this.#filters.find(filter => types.find(type => type === filter));
+        return this.#filters.find((filter) => types.find((type) => type === filter));
       }
-      return this.#filters.includes(types);
+      if (typeof types === 'string') {
+        return this.#filters.includes(types);
+      }
+      return false;
     });
 
-    this.mapWrapper?.filterMarkers(marker => {
-      return !!this.#filteredLocations.find(
-        location => marker.location?.id == location.id
-      );
+    this.mapWrapper?.filterMarkers((marker) => {
+      return !!this.#filteredLocations.find((location) => marker.location?.id == location.id);
     });
 
     this.dispatchEvent('appliedFilters', {
@@ -500,7 +487,7 @@ export default class LocationsMap {
   dispatchEvent = (
     type: string,
     options: CustomEventInit<Record<any, unknown>> = {},
-    element: HTMLElement = null
+    element: HTMLElement|null = null,
   ): boolean => {
     return (element || this.uiContainer).dispatchEvent(
       new CustomEvent(`${type}.locationsMap`, {
@@ -511,7 +498,7 @@ export default class LocationsMap {
           ...(options.detail || {}),
           locationsMap: this,
         },
-      })
+      }),
     );
   };
 
@@ -525,9 +512,17 @@ export default class LocationsMap {
       },
     });
 
+    if (!this.mapWrapper) {
+      throw new Error('MapWrapper not set');
+    }
+
     this.mapWrapper.setParent(this);
 
     const mapTarget = this.uiContainer.querySelector('locations-map-target');
+    if (!mapTarget) {
+      throw new Error('Map target (.locations-map-target) not found');
+    }
+
     mapTarget.id = mapTarget.id || 'locations-map-target';
 
     await this.mapWrapper.initializeMap(mapTarget.id, {
@@ -546,7 +541,7 @@ export default class LocationsMap {
     // trigger geolocation
     if (this.settings.geolocateOnStart && navigator.geolocation) {
       setTimeout(() => {
-        navigator.geolocation.getCurrentPosition(position => {
+        navigator.geolocation.getCurrentPosition((position) => {
           if (this.dispatchEvent('geolocated', { detail: { position } })) {
             this.setMapPosition(position, true);
           }
@@ -567,14 +562,14 @@ export default class LocationsMap {
    * create the map markers and the clusterer
    */
   protected createMapMarkers = () => {
-    this.#markers = this.#locations.map(location => {
+    this.#markers = this.#locations.map((location) => {
       return {
         latitude: location.latitude as number,
         longitude: location.longitude as number,
         location,
       };
     });
-    return this.mapWrapper.addMapMarkers(this.#markers);
+    return this.mapWrapper?.addMapMarkers(this.#markers);
   };
 
   /**
@@ -590,7 +585,7 @@ export default class LocationsMap {
   protected initSearchForm = async () => {
     if (!this.searchForm) return;
 
-    this.searchForm.addEventListener('submit', e => {
+    this.searchForm.addEventListener('submit', (e) => {
       if (this.dispatchEvent('search')) {
         e.stopPropagation();
         e.preventDefault();
@@ -614,12 +609,8 @@ export default class LocationsMap {
    */
   protected addListeners = () => {
     // geolocate
-    const geolocationTriggers = this.uiContainer.querySelectorAll(
-      '[data-geolocate-trigger]'
-    );
-    [...geolocationTriggers].forEach(button =>
-      button.addEventListener('click', this.geolocate)
-    );
+    const geolocationTriggers = this.uiContainer.querySelectorAll('[data-geolocate-trigger]');
+    [...geolocationTriggers].forEach((button) => button.addEventListener('click', this.geolocate));
 
     if (this.locationList) {
       // pan to location when clicking on the list
@@ -627,15 +618,11 @@ export default class LocationsMap {
 
       // pan to location when hovering on a location
       this.locationList.addEventListener('mouseenter', this.onListedLocationHover, true);
-      this.locationList.addEventListener(
-        'mouseleave',
-        this.onListedLocationHoverOut,
-        true
-      );
+      this.locationList.addEventListener('mouseleave', this.onListedLocationHoverOut, true);
     }
 
     // listen to marker clicks
-    this.mapWrapper.addMarkerClickCallback(this.onMarkerClick);
+    this.mapWrapper?.addMarkerClickCallback(this.onMarkerClick);
 
     // listen to popup closing
     this.uiContainer.addEventListener('closedPopup.locationsMap', () => {
@@ -643,7 +630,7 @@ export default class LocationsMap {
     });
 
     // listen to "close-popup" click
-    this.uiContainer.addEventListener('click', e => {
+    this.uiContainer.addEventListener('click', (e) => {
       const closeButton = (e.target as HTMLElement).closest('[data-close-popup]');
       if (closeButton) {
         e.preventDefault();
@@ -658,8 +645,8 @@ export default class LocationsMap {
    * Open a specific location
    */
   public openLocation = ({ id }: Partial<LocationData>): boolean => {
-    const marker = this.#markers.find(marker => marker.location.id == id);
-    if (!marker) {
+    const marker = this.#markers.find((marker) => marker.location?.id == id);
+    if (!marker || !marker.location) {
       return false;
     }
 
@@ -672,20 +659,28 @@ export default class LocationsMap {
    * handle marker clicks
    */
   protected onMarkerClick = (marker: MapMarkerInterface) => {
+    if (!marker.location) {
+      return;
+    }
+
     if (this.locationList) {
       // deselect other focused locations
-      [...this.locationList.querySelectorAll(`.location-wrapper.in-focus`)].forEach(
-        item => item.classList.remove('in-focus')
+      [...this.locationList.querySelectorAll(`.location-wrapper.in-focus`)].forEach((item) =>
+        item.classList.remove('in-focus'),
       );
 
       // select the new one
       this.locationList
-        .querySelector(`.location-wrapper[data-property="${marker.location.id}"]`)
+        .querySelector(`.location-wrapper[data-property="${marker.location?.id}"]`)
         ?.classList.add('in-focus');
     }
 
     // make sure we have the updated distance values
-    const location = this.#locations.find(location => location.id == marker.location.id);
+    const location = this.#locations.find((location) => location.id == marker.location?.id);
+    if (!location) {
+      return;
+    }
+
     const popupHtml = this.generateLocationPopupHTML(location);
     const detail = {
       marker,
@@ -695,12 +690,12 @@ export default class LocationsMap {
     if (this.dispatchEvent('showPopup', { detail })) {
       this.selectedMarker = marker;
       // change the map marker icon
-      this.mapWrapper.unhighlightMarkers();
-      this.mapWrapper.highlightMapMarker(marker);
+      this.mapWrapper?.unhighlightMarkers();
+      this.mapWrapper?.highlightMapMarker(marker);
 
       // display popups in a container outside the map
       if (this.dispatchEvent('showPopupOutsideMap', { detail })) {
-        this.popupContainers.forEach(container => {
+        this.popupContainers.forEach((container) => {
           container.innerHTML = popupHtml;
         });
       }
@@ -711,7 +706,7 @@ export default class LocationsMap {
           detail,
         })
       ) {
-        this.mapWrapper.displayMarkerTooltip(marker, popupHtml);
+        this.mapWrapper?.displayMarkerTooltip(marker, popupHtml);
       }
     }
   };
@@ -725,7 +720,7 @@ export default class LocationsMap {
     if (!locationEl || target.closest('a')) return;
 
     const locationId = locationEl.dataset.property;
-    const location = this.#locations.find(location => location.id == locationId);
+    const location = this.#locations.find((location) => location.id == locationId);
     let allowed = true;
     if (location) {
       allowed = this.dispatchEvent('listClick', {
@@ -762,7 +757,7 @@ export default class LocationsMap {
     if (!locationEl || target.closest('a')) return;
 
     const locationId = locationEl.dataset.property;
-    const location = this.#locations.find(location => location.id == locationId);
+    const location = this.#locations.find((location) => location.id == locationId);
     let allowed = true;
     if (location) {
       // don't trigger twice
@@ -800,7 +795,7 @@ export default class LocationsMap {
     if (!locationEl || target.closest('a')) return;
 
     const locationId = locationEl.dataset.property;
-    const location = this.#locations.find(location => location.id == locationId);
+    const location = this.#locations.find((location) => location.id == locationId);
     if (location) {
       if (this.hoveredLocation && this.hoveredLocation.id == location.id) {
         this.hoveredLocation = null;
@@ -814,7 +809,7 @@ export default class LocationsMap {
    */
   focusOnLocation = (location: LocationData): this => {
     const zoom = this.settings.focusedZoom || 17;
-    this.mapWrapper.panTo(location, zoom);
+    this.mapWrapper?.panTo(location, zoom);
     return this;
   };
 
@@ -823,15 +818,12 @@ export default class LocationsMap {
    * @param position
    * @param firstTime
    */
-  setMapPosition = (
-    position: Position | GeolocationPosition,
-    firstTime: boolean = false
-  ): this => {
+  setMapPosition = (position: Position | GeolocationPosition, firstTime: boolean = false): this => {
     this.#latitude = position.coords.latitude;
     this.#longitude = position.coords.longitude;
     this.geolocalized = true;
     if (!firstTime || this.settings.scrollToGeolocation) {
-      this.mapWrapper.panTo({
+      this.mapWrapper?.panTo({
         latitude: this.#latitude,
         longitude: this.#longitude,
       });
@@ -848,18 +840,18 @@ export default class LocationsMap {
     return new Promise((resolve, reject) => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          position => {
+          (position) => {
             this.hasClientAddress = true;
             if (this.dispatchEvent('geolocated', { detail: { position } })) {
               this.setMapPosition(position);
             }
             resolve(position);
           },
-          error => {
+          (error) => {
             alert(error.message);
             console.error(error);
             reject(error);
-          }
+          },
         );
       } else {
         reject('Not available');
@@ -873,8 +865,12 @@ export default class LocationsMap {
   /**
    * get the autocomplete search results for addresses
    */
-  getSearchResults = async (searchValue: string) => {
+  getSearchResults = async (searchValue: string): Promise<SearchResult[]> => {
     const zipcodeRegex = /^(([0-8][0-9])|(9[0-5])|(2[ab]))[0-9]{3}$/;
+
+    if (!this.searchProvider) {
+      return [];
+    }
 
     let searchPromise: Promise<SearchResult[]>;
     if (searchValue.match(zipcodeRegex)) {
@@ -893,7 +889,7 @@ export default class LocationsMap {
    */
   protected updateFromSearch = (result: SearchResult): this => {
     if (!this.dispatchEvent('updatingFromSearch', { detail: { result } })) {
-      return;
+      return this;
     }
 
     this.#latitude = result.latitude;
@@ -903,12 +899,12 @@ export default class LocationsMap {
     });
     this.hasClientAddress = true;
 
-    this.mapWrapper.panTo(
+    this.mapWrapper?.panTo(
       {
         latitude: this.#latitude,
         longitude: this.#longitude,
       },
-      this.settings.focusedAreaZoom || 10
+      this.settings.focusedAreaZoom || 10,
     );
     this.updateContent();
 
@@ -923,12 +919,12 @@ export default class LocationsMap {
     const searchValue = this.searchInput ? this.searchInput.value : '';
 
     if (!searchValue.trim().length && this.geolocalized) {
-      this.mapWrapper.panTo(
+      this.mapWrapper?.panTo(
         {
           latitude: this.#latitude,
           longitude: this.#longitude,
         },
-        this.settings.zoom
+        this.settings.zoom,
       );
       this.geolocalized = false;
 
@@ -945,7 +941,7 @@ export default class LocationsMap {
    * Get the search provider.
    */
   getSearchProvider(): SearchProvider | null {
-    return this.searchProvider;
+    return this.searchProvider || null;
   }
 
   /**
@@ -954,15 +950,15 @@ export default class LocationsMap {
   protected getAutocompleteResults = async () => {
     if (!this.searchInput) return [];
     await this.getSearchResults(this.searchInput.value);
-    return this.searchProvider.getAutocompleteData();
+    return this.searchProvider?.getAutocompleteData() || [];
   };
 
   /**
    * scroll to a specific location
    */
-  scrollTo = (location: HTMLElement = null): this => {
+  scrollTo = (location: HTMLElement|null = null): this => {
     location = location || this.uiContainer.querySelector('.location-wrapper');
-    location.scrollIntoView();
+    location?.scrollIntoView();
     return this;
   };
 
@@ -980,7 +976,7 @@ export default class LocationsMap {
   }
 
   zoomToContent = (): this => {
-    this.mapWrapper.zoomToContent();
+    this.mapWrapper?.zoomToContent();
     return this;
   };
 
@@ -988,6 +984,6 @@ export default class LocationsMap {
    * get the locations list element
    */
   getLocationsList = (): HTMLElement | null => {
-    return this.locationList;
+    return this.locationList || null;
   };
 }

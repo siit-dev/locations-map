@@ -6,7 +6,7 @@ import MapsWrapperInterface, {
 } from './MapsWrapperInterface';
 import LocationsMap from '../LocationsMap';
 import { LoaderOptions } from '@googlemaps/js-api-loader';
-import { InfoWindow, MapOptions, Marker, GoogleMap } from '..';
+import { GoogleInfoWindow, MapOptions, GoogleMarker, GoogleMap, GoogleIcon } from '..';
 
 export interface GoogleMapSettingsInterface extends MapSettingsInterface {
   apiSettings?: LoaderOptions;
@@ -15,12 +15,12 @@ export interface GoogleMapSettingsInterface extends MapSettingsInterface {
 
 export default class GoogleMapsWrapper implements MapsWrapperInterface {
   map?: GoogleMap;
-  mapMarkers?: Marker[] = [];
+  mapMarkers?: GoogleMarker[] = [];
   settings: GoogleMapSettingsInterface;
-  infoWindow?: InfoWindow;
-  parent?: LocationsMap = null;
+  infoWindow?: GoogleInfoWindow;
+  parent?: LocationsMap | null = null;
 
-  constructor(settings?: GoogleMapSettingsInterface) {
+  constructor(settings: GoogleMapSettingsInterface) {
     this.settings = settings;
   }
 
@@ -29,29 +29,27 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
     return this;
   }
 
-  addMarkerHoverCallback(fn) {
+  addMarkerHoverCallback(fn: Function) {
     return this;
   }
 
   addMarkerClickCallback(callback: (marker: MapMarkerInterface) => void): this {
-    this.mapMarkers.forEach(marker =>
+    this.mapMarkers?.forEach((marker) =>
       marker.addListener('click', () => {
-        callback(marker['originalSettings']);
-      })
+        callback((marker as any)['originalSettings']);
+      }),
     );
     return this;
   }
 
   displayMarkerTooltip(marker: MapMarkerInterface, content: string): this {
-    const mapMarker = this.mapMarkers.find(
-      mapMarker => mapMarker['originalSettings'].location.id == marker.location.id
+    const mapMarker = this.mapMarkers?.find(
+      (mapMarker) => (marker as any)['originalSettings'].location.id == marker.location?.id,
     );
     this.infoWindow = this.infoWindow || new google.maps.InfoWindow();
     this.infoWindow.setContent(content || marker.popup);
     this.infoWindow.open(this.map, mapMarker);
-    this.infoWindow.addListener('closeclick', () =>
-      this.parent.dispatchEvent('closedPopup')
-    );
+    this.infoWindow.addListener('closeclick', () => this.parent?.dispatchEvent('closedPopup'));
     return this;
   }
 
@@ -68,15 +66,23 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
       latitude: 0,
       longitude: 0,
       icon: null,
-    }
+    },
   ) {
     if (!this.parent) {
       throw new Error('Missing parent LocationsMap');
     }
     this.settings = { ...settings, ...this.settings };
+    if (!this.settings.apiSettings) {
+      throw new Error('Missing Google Maps API settings');
+    }
 
     await loadGoogleMapsAPI(this.settings.apiSettings);
-    this.map = new google.maps.Map(document.getElementById(elementId), {
+    const mapElement = document.getElementById(elementId);
+    if (!mapElement) {
+      throw new Error(`Missing map element with id ${elementId}`);
+    }
+
+    this.map = new google.maps.Map(mapElement, {
       center: { lat: this.settings.latitude, lng: this.settings.longitude },
       zoom: this.settings.zoom,
       gestureHandling: 'greedy',
@@ -93,7 +99,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
     return this.map;
   }
 
-  createMapMarker(marker: MapMarkerInterface, hasClusters: boolean = false): Marker {
+  createMapMarker(marker: MapMarkerInterface, hasClusters: boolean = false): GoogleMarker {
     const mapMarker = new google.maps.Marker({
       position: {
         lat: parseFloat(marker.latitude.toString()),
@@ -102,7 +108,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
       icon: this.getMarkerIcon(marker),
       map: hasClusters ? undefined : this.map,
     });
-    mapMarker['originalSettings'] = marker;
+    (mapMarker as any).originalSettings = marker;
     if (marker.popup) {
       const infoWindow = new google.maps.InfoWindow({
         content: marker.popup,
@@ -118,11 +124,18 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
   }
 
   addMapMarkers(markers: MapMarkerInterface[]): this {
-    this.mapMarkers = markers.map(marker => this.createMapMarker(marker, false));
+    this.mapMarkers = markers.map((marker) => this.createMapMarker(marker, false));
     return this;
   }
 
-  getMarkerIcon(marker: MapMarkerInterface, selected: boolean = false) {
+  getMarkerIcon(
+    marker: MapMarkerInterface,
+    selected: boolean = false,
+  ): string | GoogleIcon | google.maps.Symbol | null | undefined {
+    if (!marker.location) {
+      return null;
+    }
+
     let icon = undefined;
     if (this.settings.icon) {
       if (this.settings.icon instanceof Function) {
@@ -131,15 +144,15 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
         icon = this.settings.icon;
       }
     }
-    return icon;
+    return icon as string | GoogleIcon | google.maps.Symbol | null | undefined;
   }
 
   /**
    * highlight a selected marker
    */
   highlightMapMarker(marker: MapMarkerInterface): this {
-    this.mapMarkers.forEach(mapMarker => {
-      if (mapMarker['originalSettings'].location.id == marker.location.id) {
+    this.mapMarkers?.forEach((mapMarker) => {
+      if ((mapMarker as any).originalSettings.location.id == marker.location?.id) {
         if (this.settings.icon) {
           mapMarker.setIcon(this.getMarkerIcon(marker, true));
         }
@@ -153,16 +166,16 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
    */
   unhighlightMarkers(): this {
     if (this.settings.icon) {
-      this.mapMarkers.forEach(mapMarker => {
-        mapMarker.setIcon(this.getMarkerIcon(mapMarker['originalSettings']));
+      this.mapMarkers?.forEach((mapMarker) => {
+        mapMarker.setIcon(this.getMarkerIcon((mapMarker as any).originalSettings));
       });
     }
     return this;
   }
 
   filterMarkers(callback: (marker: MapMarkerInterface) => boolean): this {
-    this.mapMarkers.forEach(mapMarker => {
-      mapMarker.setVisible(callback(mapMarker['originalSettings']));
+    this.mapMarkers?.forEach((mapMarker) => {
+      mapMarker.setVisible(callback((mapMarker as any).originalSettings));
     });
     return this;
   }
@@ -171,12 +184,12 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
     return this.map;
   }
 
-  getMapMarkers(): Marker[] {
-    return this.mapMarkers;
+  getMapMarkers(): GoogleMarker[] {
+    return this.mapMarkers || [];
   }
 
-  panTo(position: MapPositionInterface, zoom: number | null): this {
-    this.map.panTo({
+  panTo(position: MapPositionInterface, zoom: number | null | undefined): this {
+    this.map?.panTo({
       lat: position.latitude,
       lng: position.longitude,
     });
@@ -188,17 +201,20 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
   }
 
   setZoom(zoom: number): this {
-    this.map.setZoom(zoom);
+    this.map?.setZoom(zoom);
     return this;
   }
 
   zoomToContent(): this {
     // Zoom to the bounds of the markers
     const bounds = new google.maps.LatLngBounds();
-    this.mapMarkers.forEach(marker => {
-      bounds.extend(marker.getPosition());
+    this.mapMarkers?.forEach((marker) => {
+      const position = marker.getPosition();
+      if (position) {
+        bounds.extend(position);
+      }
     });
-    this.map.fitBounds(bounds);
+    this.map?.fitBounds(bounds);
     return this;
   }
 }

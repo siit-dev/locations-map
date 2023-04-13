@@ -6,7 +6,7 @@ export interface PaginationSettings extends ListOptions {
 }
 
 export interface PaginationProvider {
-  parent: LocationsMap;
+  parent: LocationsMap | null;
 
   setParent: (parent: LocationsMap) => this;
   paginate: () => void;
