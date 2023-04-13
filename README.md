@@ -53,16 +53,16 @@ Inside your HTML, create a structure similar to this:
     <!-- The map will be added here by JS -->
   </locations-map-target>
 
-  <template class="template-results-single">
+  <script type="text/locations-map-template" class="template-results-single">
     <div class="results-count">{{ results }} result</div>
-  </template>
+  </script>
 
-  <template class="template-results-multiple">
+  <script type="text/locations-map-template" class="template-results-multiple">
     <div class="results-count">{{ results }} results</div>
-  </template>
+  </script>
 
   <!-- this is the default location template -->
-  <template class="template-location">
+  <script type="text/locations-map-template" class="template-location">
     <div class="location">
       <div class="location-info">
         <h3 class="location-title">{{ name }}</h3>
@@ -75,10 +75,10 @@ Inside your HTML, create a structure similar to this:
         </div>
       </div>
     </div>
-  </template>
+  </script>
 
   <!-- popup templates -->
-  <template class="template-popup-location">
+  <script type="text/locations-map-template" class="template-popup-location">
     <div class="location in-popup">
       <div class="location">
         <button class="close-popup" data-close-popup>&times;</button>
@@ -94,7 +94,7 @@ Inside your HTML, create a structure similar to this:
         </div>
       </div>
     </div>
-  </template>
+  </script>
 </locations-map-container>
 ```
 
@@ -104,10 +104,10 @@ These elements will be used as following:
 - `locations-map-target` (required) - will be used to display the map
 - `locations-map-list` - will be used to display the list of stores/locations (and optionally with pagination)
 - `locations-map-popup` - will be used to display outside the map the popups when clicking on a location. For example, if you want to display the popup in a different place on the page, not over the map, you can use this element (there can be multiple such elements) and use `preventDefault` on the `showPopupOnMap.locationsMap` event.
-- `template.template-results-single` - this is the template which will be used to display the header on the `locations-map-list`, containing the number of stores/locations displayed, when there is only one result
-- `template.template-results-multiple` - this is the template which will be used to display the header on the `locations-map-list`, containing the number of stores/locations displayed, when there are more than 1 result
-- `template.template-location` - this is used for the HTML markup for the items displayed in the `location-map-list`. Only required if you also have the `locations-map-list` element.
-- `template.template-popup-location` - used for the HTML markup for the popups. If you want to add a "close" button, add the `data-close-popup` attribute to it.
+- `template.template-results-single` or `script[type="text/locations-map-template"].template-results-single` - this is the template which will be used to display the header on the `locations-map-list`, containing the number of stores/locations displayed, when there is only one result
+- `template.template-results-multiple` or `script[type="text/locations-map-template"].template-results-multiple` - this is the template which will be used to display the header on the `locations-map-list`, containing the number of stores/locations displayed, when there are more than 1 result
+- `template.template-location` or `script[type="text/locations-map-template"].template-location` - this is used for the HTML markup for the items displayed in the `location-map-list`. Only required if you also have the `locations-map-list` element.
+- `template.template-popup-location` or `script[type="text/locations-map-template"].template-popup-location` - used for the HTML markup for the popups. If you want to add a "close" button, add the `data-close-popup` attribute to it.
 - `form.data-location-search` - the form for searching for a location. It should also contain a `input[type="search"]` element, which is the input used for searching.
 - `[data-geolocate-trigger]` - buttons which can trigger the geolocation. They can be anywhere in the `locations-map-container` element, not necessarily in the form.
 

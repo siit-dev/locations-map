@@ -308,9 +308,9 @@ export default class LocationsMap {
    */
   protected generateResultsCount = (count: number): string => {
     let html = '';
-    const template = document.querySelector(`template.template-results-${count > 1 ? 'multiple' : 'single'}`);
+    const template = this.getTemplateHtmlBySelector(`.template-results-${count > 1 ? 'multiple' : 'single'}`);
     if (template) {
-      html = template.innerHTML.replace('{{ results }}', count.toString());
+      html = template.replace('{{ results }}', count.toString());
     }
     const detail = { html, count, template };
     this.dispatchEvent('updatedLocationsCount', { detail });
@@ -357,15 +357,15 @@ export default class LocationsMap {
    */
   protected generateLocationHTML = (location: LocationData): string => {
     // find the template
-    const defaultSelector = `template.template-location:not([data-location-type])`;
+    const defaultSelector = `.template-location:not([data-location-type])`;
     const selector = location.type
-      ? `template.template-location[data-location-type="${location.type}"]`
-      : defaultSelector;
-    const template = document.querySelector(selector) || document.querySelector(defaultSelector);
+    ? `.template-location[data-location-type="${location.type}"]`
+    : defaultSelector;
+    const template = this.getTemplateHtmlBySelector(selector)|| this.getTemplateHtmlBySelector(defaultSelector);
 
     // replace placeholders
     if (template) {
-      const innerHtml = this.replaceHTMLPlaceholders(template.innerHTML, location);
+      const innerHtml = this.replaceHTMLPlaceholders(template, location);
       const isSelected = this.selectedMarker && this.selectedMarker?.location?.id == location.id;
       const html = `<div class="location-wrapper location-item-wrapper${
         isSelected ? ' in-focus' : ''
@@ -384,15 +384,15 @@ export default class LocationsMap {
    */
   protected generateLocationPopupHTML = (location: LocationData): string => {
     // find the template
-    const defaultSelector = `template.template-popup-location:not([data-location-type])`;
+    const defaultSelector = `.template-popup-location:not([data-location-type])`;
     const selector = location.type
-      ? `template.template-popup-location[data-location-type="${location.type}"]`
+      ? `.template-popup-location[data-location-type="${location.type}"]`
       : defaultSelector;
-    const template = document.querySelector(selector) || document.querySelector(defaultSelector);
+    const template = this.getTemplateHtmlBySelector(selector) || this.getTemplateHtmlBySelector(defaultSelector);
 
     // replace placeholders
     if (template) {
-      const innerHtml = this.replaceHTMLPlaceholders(template.innerHTML, location);
+      const innerHtml = this.replaceHTMLPlaceholders(template, location);
       const html = `<div class="location-wrapper location-popup-wrapper" data-property="${location.id}" data-type="${location.type}">${innerHtml}</div>`;
       const detail = { html, innerHtml, location };
       this.dispatchEvent('generateLocationPopupHTML', { detail });
@@ -992,4 +992,9 @@ export default class LocationsMap {
   getLocationsList = (): HTMLElement | null => {
     return this.locationList || null;
   };
+
+  protected getTemplateHtmlBySelector(selector: string, container: HTMLElement|Document = document): string|null{
+    const template = container.querySelector(`template${selector}, script[type="text/locations-map-template"]${selector}`) as HTMLTemplateElement|HTMLScriptElement;
+      return template?.innerHTML;
+  }
 }

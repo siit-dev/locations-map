@@ -2,8 +2,10 @@
   "name": "@smartimpact-it/locations-map",
   "version": "1.2.5",
   "description": "A library to display locations on a map.",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "lib/index.umd.js",
+  "es2015": "lib/index.es.js",
+  "module": "lib/index.es.js",
+  "types": "lib/types/index.d.ts",
   "sideEffects": false,
   "authors": [
     {
@@ -27,7 +29,7 @@
   "scripts": {
     "dev": "vite",
     "preview": "vite preview",
-    "build": "tsc",
+    "build": "vite build && tsc --emitDeclarationOnly",
     "test": "jest --config jestconfig.json --passWithNoTests",
     "format": "prettier --write \"src/**/*.ts\" \"**/*.md\"",
     "format:check": "prettier --list-different \"src/**/**.{js,ts}\" \"**/*.md\"",

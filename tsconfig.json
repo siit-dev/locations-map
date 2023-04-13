@@ -6,7 +6,8 @@
     "lib": ["ES2020", "dom", "dom.iterable"],
     "types": ["node", "google.maps", "markerclustererplus"],
     "skipLibCheck": true,
-    "outDir": "./lib",
+    "outDir": "./lib/types/",
+    "declaration": true,
 
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
@@ -15,8 +16,6 @@
     "allowSyntheticDefaultImports": true,
 
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "allowJs": true
   },

@@ -44,16 +44,16 @@
         <!-- The map will be added here by JS -->
       </locations-map-target>
 
-      <template class="template-results-single">
+      <script type="text/locations-map-template" class="template-results-single">
         <div class="results-count">{{ results }} result</div>
-      </template>
+      </script>
 
-      <template class="template-results-multiple">
+      <script type="text/locations-map-template" class="template-results-multiple">
         <div class="results-count">{{ results }} results</div>
-      </template>
+      </script>
 
       <!-- this is the default location template -->
-      <template class="template-location">
+      <script type="text/locations-map-template" class="template-location">
         <div class="location">
           <div class="location-info">
             <h3 class="location-title">{{ name }}</h3>
@@ -67,10 +67,10 @@
             </div>
           </div>
         </div>
-      </template>
+      </script>
 
       <!-- popup templates -->
-      <template class="template-popup-location">
+      <script type="text/locations-map-template" class="template-popup-location">
         <div class="location in-popup">
           <div class="location">
             <button class="close-popup" data-close-popup>&times;</button>
@@ -86,7 +86,7 @@
             </div>
           </div>
         </div>
-      </template>
+      </script>
     </locations-map-container>
 
 
