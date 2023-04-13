@@ -24,12 +24,7 @@ Inside your HTML, create a structure similar to this:
         <div class="search-wrapper">
           <div class="search-icon">Search</div>
 
-          <input
-            name="search_location"
-            id="searchvalue"
-            type="search"
-            placeholder="Search"
-          />
+          <input name="search_location" id="searchvalue" type="search" placeholder="Search" />
           <button type="reset" class="button-close">&times;</button>
           <button type="submit" class="button-search">Search</button>
         </div>
