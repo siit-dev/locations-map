@@ -313,7 +313,7 @@ export default class LocationsMap {
       html = template.innerHTML.replace('{{ results }}', count.toString());
     }
     const detail = { html, count, template };
-    this.dispatchEvent('updatedLocationListContent', { detail });
+    this.dispatchEvent('updatedLocationsCount', { detail });
     return detail.html;
   };
 
@@ -342,9 +342,9 @@ export default class LocationsMap {
         value = distance ? `${distance} km` : '';
       }
 
-      html = html
-        .replaceAll(`{{ ${key} }}`, (value || '').toString())
-        .replaceAll(`{{${key}}}`, (value || '').toString());
+      // Replace the placeholder.
+      const regex = new RegExp(`{{\\s?${key}\\s?}}`, 'g')
+      html = html.replace(regex, (value || '').toString());
     }
 
     const detail = { html, location };
@@ -418,11 +418,13 @@ export default class LocationsMap {
       })
       .sort((a, b) => a.distance - b.distance);
 
+    const locations = this.#locations;
     this.dispatchEvent('updatedLocations', {
       detail: {
-        locations: this.#locations,
+        locations,
       },
     });
+    this.#locations = locations;
   };
 
   /**
@@ -489,6 +491,9 @@ export default class LocationsMap {
     options: CustomEventInit<Record<any, unknown>> = {},
     element: HTMLElement|null = null,
   ): boolean => {
+    if (import.meta.env.MODE === 'development') {
+      console.log(`[locations-map] ${type}.locationsMap event`, options);
+    }
     return (element || this.uiContainer).dispatchEvent(
       new CustomEvent(`${type}.locationsMap`, {
         bubbles: true,
@@ -543,6 +548,7 @@ export default class LocationsMap {
       setTimeout(() => {
         navigator.geolocation.getCurrentPosition((position) => {
           if (this.dispatchEvent('geolocated', { detail: { position } })) {
+            this.hasClientAddress = true;
             this.setMapPosition(position, true);
           }
         });

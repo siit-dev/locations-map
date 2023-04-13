@@ -69,7 +69,7 @@ export default class Autocomplete implements AutocompleteProvider {
     });
 
     this.input.addEventListener('selection', (event) => {
-      onSelect(event.detail.selection.value[event.detail.selection.key]);
+      onSelect(event.detail.selection.value.result);
     });
 
     return this;

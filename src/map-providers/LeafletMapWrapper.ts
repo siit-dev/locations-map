@@ -17,7 +17,7 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
   infoWindow?: L.Popup;
   parent?: LocationsMap | null = null;
 
-  constructor(settings: MapSettingsInterface) {
+  constructor(settings: MapSettingsInterface = {}) {
     this.settings = settings;
   }
 
@@ -77,7 +77,7 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
     }
 
     this.map = new L.Map(mapElement, {
-      center: [settings.latitude, settings.longitude],
+      center: [settings.latitude || 0, settings.longitude || 0],
       zoom: settings.zoom,
       maxZoom: 20,
     });

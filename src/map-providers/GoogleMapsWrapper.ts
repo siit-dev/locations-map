@@ -20,7 +20,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
   infoWindow?: GoogleInfoWindow;
   parent?: LocationsMap | null = null;
 
-  constructor(settings: GoogleMapSettingsInterface) {
+  constructor(settings: GoogleMapSettingsInterface = {}) {
     this.settings = settings;
   }
 
@@ -44,7 +44,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
 
   displayMarkerTooltip(marker: MapMarkerInterface, content: string): this {
     const mapMarker = this.mapMarkers?.find(
-      (mapMarker) => (marker as any)['originalSettings'].location.id == marker.location?.id,
+      (mapMarker) => (mapMarker as any)['originalSettings'].location.id == marker.location?.id,
     );
     this.infoWindow = this.infoWindow || new google.maps.InfoWindow();
     this.infoWindow.setContent(content || marker.popup);
@@ -83,7 +83,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
     }
 
     this.map = new google.maps.Map(mapElement, {
-      center: { lat: this.settings.latitude, lng: this.settings.longitude },
+      center: { lat: this.settings.latitude || 0, lng: this.settings.longitude || 0 },
       zoom: this.settings.zoom,
       gestureHandling: 'greedy',
       streetViewControl: false,

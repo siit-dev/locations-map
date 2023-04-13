@@ -7,7 +7,7 @@ import MapsWrapperInterface from './map-providers/MapsWrapperInterface';
 import { PaginationProvider } from '.';
 
 export interface LocationData {
-  id: string;
+  id: string | number;
   latitude: number;
   longitude: number;
   type?: string;

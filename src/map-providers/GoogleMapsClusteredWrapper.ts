@@ -8,7 +8,7 @@ export interface GoogleMapClusteredSettingsInterface extends GoogleMapSettingsIn
 export default class GoogleMapsClusteredWrapper extends GoogleMapsWrapper implements ClusteredMapsWrapperInterface {
   clusterer: MarkerClusterer | null = null;
 
-  constructor(settings: GoogleMapClusteredSettingsInterface) {
+  constructor(settings: GoogleMapClusteredSettingsInterface = {}) {
     super(settings);
     if (settings) {
       this.settings = settings;

@@ -14,8 +14,8 @@ export interface MapMarkerInterface extends MapPositionInterface {
 }
 
 export interface MapSettingsInterface {
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   zoom?: number;
   icon?: Icon | L.IconOptions | GoogleIcon | null;
   [key: string]: any;

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Locations Map Demo</title>
+  </head>
+  <body>
+
+    <locations-map-container>
+      <locations-map-header class="text-center">
+        <div class="search-container">
+          <form class="search-form" type="GET" action="#" data-location-search>
+            <div class="search-wrapper">
+              <div class="search-icon">Search</div>
+
+              <input
+                name="search_location"
+                id="searchvalue"
+                type="search"
+                placeholder="Search"
+              />
+              <button type="reset" class="button-close">&times;</button>
+              <button type="submit" class="button-search">Search</button>
+            </div>
+          </form>
+
+          <button type="button" class="button-geolocate" data-geolocate-trigger>
+            <span>Geolocate</span>
+          </button>
+        </div>
+      </locations-map-header>
+
+      <locations-map-popup>
+        <!-- location popup will be added here by JS -->
+      </locations-map-popup>
+
+      <locations-map-list>
+        <!-- locations will be added here by JS -->
+      </locations-map-list>
+
+      <locations-map-target>
+        <!-- The map will be added here by JS -->
+      </locations-map-target>
+
+      <template class="template-results-single">
+        <div class="results-count">{{ results }} result</div>
+      </template>
+
+      <template class="template-results-multiple">
+        <div class="results-count">{{ results }} results</div>
+      </template>
+
+      <!-- this is the default location template -->
+      <template class="template-location">
+        <div class="location">
+          <div class="location-info">
+            <h3 class="location-title">{{ name }}</h3>
+            <div class="address">
+              {{ address1 }} <br />
+              {{ postcode }} {{ city }}
+              {{ distance_km }}
+            </div>
+            <div class="phone-number">
+              <a href="tel:{{ phone }}"> {{ phone }} </a>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- popup templates -->
+      <template class="template-popup-location">
+        <div class="location in-popup">
+          <div class="location">
+            <button class="close-popup" data-close-popup>&times;</button>
+            <div class="location-info">
+              <h3 class="location-title">{{ name }}</h3>
+              <div class="address">
+                {{ address1 }} <br />
+                {{ postcode }} {{ city }}
+              </div>
+              <div class="phone-number">
+                <a href="tel:{{ phone }}"> {{ phone }} </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </locations-map-container>
+
+
+    <script type="module" src="/src/demo.ts"></script>
+  </body>
+</html>

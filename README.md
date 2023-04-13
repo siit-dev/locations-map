@@ -156,10 +156,7 @@ You have 2 types of Google maps providers: with and without clusters:
 - `GoogleMapsWrapper`
 
 ```javascript
-import LocationsMap, {
-  GoogleMapsClusteredWrapper,
-  GoogleMapsGeocoderProvider,
-} from '@smartimpact-it/locations-map';
+import LocationsMap, { GoogleMapsClusteredWrapper, GoogleMapsGeocoderProvider } from '@smartimpact-it/locations-map';
 
 const container = document.querySelector('locations-map-container');
 if (container) {
@@ -208,10 +205,7 @@ You have 2 types of Leaflet maps: with and without clusters:
 - `LeafletMapWrapper`
 
 ```javascript
-import LocationsMap, {
-  LeafletMapClusteredWrapper,
-  NominatimProvider,
-} from '@smartimpact-it/locations-map';
+import LocationsMap, { LeafletMapClusteredWrapper, NominatimProvider } from '@smartimpact-it/locations-map';
 
 const container = document.querySelector('locations-map-container');
 if (container) {
