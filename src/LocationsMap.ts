@@ -343,7 +343,7 @@ export default class LocationsMap {
       }
 
       // Replace the placeholder.
-      const regex = new RegExp(`{{\\s?${key}\\s?}}`, 'g')
+      const regex = new RegExp(`{{\\s?${key}\\s?}}`, 'g');
       html = html.replace(regex, (value || '').toString());
     }
 
@@ -358,10 +358,8 @@ export default class LocationsMap {
   protected generateLocationHTML = (location: LocationData): string => {
     // find the template
     const defaultSelector = `.template-location:not([data-location-type])`;
-    const selector = location.type
-    ? `.template-location[data-location-type="${location.type}"]`
-    : defaultSelector;
-    const template = this.getTemplateHtmlBySelector(selector)|| this.getTemplateHtmlBySelector(defaultSelector);
+    const selector = location.type ? `.template-location[data-location-type="${location.type}"]` : defaultSelector;
+    const template = this.getTemplateHtmlBySelector(selector) || this.getTemplateHtmlBySelector(defaultSelector);
 
     // replace placeholders
     if (template) {
@@ -430,7 +428,7 @@ export default class LocationsMap {
   /**
    * Apply new filters on the locations to be displayed.
    */
-  protected applyFilters = (filters: string[]|null = null): this => {
+  protected applyFilters = (filters: string[] | null = null): this => {
     if (filters !== null) {
       this.#filters = filters;
     }
@@ -489,7 +487,7 @@ export default class LocationsMap {
   dispatchEvent = (
     type: string,
     options: CustomEventInit<Record<any, unknown>> = {},
-    element: HTMLElement|null = null,
+    element: HTMLElement | null = null,
   ): boolean => {
     if (import.meta.env.MODE === 'development') {
       console.log(`[locations-map] ${type}.locationsMap event`, options);
@@ -962,7 +960,7 @@ export default class LocationsMap {
   /**
    * scroll to a specific location
    */
-  scrollTo = (location: HTMLElement|null = null): this => {
+  scrollTo = (location: HTMLElement | null = null): this => {
     location = location || this.uiContainer.querySelector('.location-wrapper');
     location?.scrollIntoView();
     return this;
@@ -993,8 +991,10 @@ export default class LocationsMap {
     return this.locationList || null;
   };
 
-  protected getTemplateHtmlBySelector(selector: string, container: HTMLElement|Document = document): string|null{
-    const template = container.querySelector(`template${selector}, script[type="text/locations-map-template"]${selector}`) as HTMLTemplateElement|HTMLScriptElement;
-      return template?.innerHTML;
+  protected getTemplateHtmlBySelector(selector: string, container: HTMLElement | Document = document): string | null {
+    const template = container.querySelector(
+      `template${selector}, script[type="text/locations-map-template"]${selector}`,
+    ) as HTMLTemplateElement | HTMLScriptElement;
+    return template?.innerHTML;
   }
 }

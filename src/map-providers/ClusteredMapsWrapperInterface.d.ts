@@ -8,8 +8,5 @@ export interface ClusteredMapSettingsInterface extends MapSettingsInterface {
 export default interface ClusteredMapsWrapperInterface extends MapsWrapperInterface {
   clusterer: any;
 
-  initializeMap: (
-    elementId?: string,
-    settings?: ClusteredMapSettingsInterface
-  ) => Promise<any>;
+  initializeMap: (elementId?: string, settings?: ClusteredMapSettingsInterface) => Promise<any>;
 }
