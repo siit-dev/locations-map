@@ -19,7 +19,7 @@ export default class LeafletMapsClusteredWrapper extends LeafletMapsWrapper impl
 
     // Add a marker clusterer to manage the markers.
     this.clusterer = (L as any).markerClusterGroup(this.settings.clusterSettings || {});
-    this.mapMarkers?.forEach((mapMarker) => {
+    this.mapMarkers?.forEach(mapMarker => {
       mapMarker.removeFrom(this.map!);
       this.clusterer?.addLayer(mapMarker);
     });
@@ -29,7 +29,7 @@ export default class LeafletMapsClusteredWrapper extends LeafletMapsWrapper impl
   }
 
   filterMarkers(callback: (marker: MapMarkerInterface) => boolean): this {
-    this.mapMarkers?.forEach((mapMarker) => {
+    this.mapMarkers?.forEach(mapMarker => {
       const isVisible = callback((mapMarker as any)?.['originalSettings']);
       if (isVisible) {
         this.clusterer?.addLayer(mapMarker);

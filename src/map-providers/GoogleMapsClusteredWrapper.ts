@@ -16,7 +16,7 @@ export default class GoogleMapsClusteredWrapper extends GoogleMapsWrapper implem
   }
 
   addMapMarkers(markers: MapMarkerInterface[]): this {
-    this.mapMarkers = markers.map((marker) => this.createMapMarker(marker, true));
+    this.mapMarkers = markers.map(marker => this.createMapMarker(marker, true));
     if (!this.map) {
       throw new Error('Map not initialized');
     }

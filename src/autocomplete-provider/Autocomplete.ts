@@ -68,7 +68,7 @@ export default class Autocomplete implements AutocompleteProvider {
       ...this.settings,
     });
 
-    this.input.addEventListener('selection', (event) => {
+    this.input.addEventListener('selection', event => {
       onSelect(event.detail.selection.value.result);
     });
 

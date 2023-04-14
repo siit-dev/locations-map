@@ -167,7 +167,7 @@ export default class LocationsMap {
    * parse the locations and fix their latitude/longitude
    */
   protected parseLocations(locations: LocationData[]): LocationData[] {
-    locations = locations.map((location) => {
+    locations = locations.map(location => {
       location = {
         ...location,
         latitude: parseFloat(location.latitude.toString()),
@@ -178,7 +178,7 @@ export default class LocationsMap {
       const threshold = 0.0001;
       const overlappingLocation = location.latitude
         ? locations.find(
-            (item) =>
+            item =>
               Math.abs(item.latitude - location.latitude) < threshold &&
               Math.abs(item.longitude - location.longitude) < threshold &&
               item.id < location.id,
@@ -262,11 +262,11 @@ export default class LocationsMap {
     this.selectedMarker = null;
     this.mapWrapper.closeMarkerTooltip();
     this.mapWrapper.unhighlightMarkers();
-    this.popupContainers.forEach((container) => {
+    this.popupContainers.forEach(container => {
       container.innerHTML = '';
     });
     if (this.locationList) {
-      [...this.locationList.querySelectorAll('.location-wrapper.in-focus')].forEach((item) =>
+      [...this.locationList.querySelectorAll('.location-wrapper.in-focus')].forEach(item =>
         item.classList.remove('in-focus'),
       );
     }
@@ -290,7 +290,7 @@ export default class LocationsMap {
     let html = '';
     html += this.generateResultsCount(this.#filteredLocations.length);
     html += '<ul class="list locations-list-inner">';
-    this.#filteredLocations.forEach((location) => {
+    this.#filteredLocations.forEach(location => {
       html += `<li>${this.generateLocationHTML(location)}</li>`;
     });
     html += '</ul>';
@@ -406,7 +406,7 @@ export default class LocationsMap {
    */
   updateLocationsDistanceAndStatus = (): void => {
     this.#locations = this.#locations
-      .map((location) => {
+      .map(location => {
         const distanceValue = distance(location.latitude, location.longitude, this.#latitude, this.#longitude, 'K');
         return {
           ...location,
@@ -433,13 +433,13 @@ export default class LocationsMap {
       this.#filters = filters;
     }
 
-    this.#filteredLocations = this.#locations.filter((location) => {
+    this.#filteredLocations = this.#locations.filter(location => {
       if (!this.#filters.length) return true;
 
       // allow using either the `filterTypes` or the `type` properties
       const types = location.filterTypes ?? location.type;
       if (Array.isArray(types)) {
-        return this.#filters.find((filter) => types.find((type) => type === filter));
+        return this.#filters.find(filter => types.find(type => type === filter));
       }
       if (typeof types === 'string') {
         return this.#filters.includes(types);
@@ -447,8 +447,8 @@ export default class LocationsMap {
       return false;
     });
 
-    this.mapWrapper?.filterMarkers((marker) => {
-      return !!this.#filteredLocations.find((location) => marker.location?.id == location.id);
+    this.mapWrapper?.filterMarkers(marker => {
+      return !!this.#filteredLocations.find(location => marker.location?.id == location.id);
     });
 
     this.dispatchEvent('appliedFilters', {
@@ -544,7 +544,7 @@ export default class LocationsMap {
     // trigger geolocation
     if (this.settings.geolocateOnStart && navigator.geolocation) {
       setTimeout(() => {
-        navigator.geolocation.getCurrentPosition((position) => {
+        navigator.geolocation.getCurrentPosition(position => {
           if (this.dispatchEvent('geolocated', { detail: { position } })) {
             this.hasClientAddress = true;
             this.setMapPosition(position, true);
@@ -566,7 +566,7 @@ export default class LocationsMap {
    * create the map markers and the clusterer
    */
   protected createMapMarkers = () => {
-    this.#markers = this.#locations.map((location) => {
+    this.#markers = this.#locations.map(location => {
       return {
         latitude: location.latitude as number,
         longitude: location.longitude as number,
@@ -589,7 +589,7 @@ export default class LocationsMap {
   protected initSearchForm = async () => {
     if (!this.searchForm) return;
 
-    this.searchForm.addEventListener('submit', (e) => {
+    this.searchForm.addEventListener('submit', e => {
       if (this.dispatchEvent('search')) {
         e.stopPropagation();
         e.preventDefault();
@@ -614,7 +614,7 @@ export default class LocationsMap {
   protected addListeners = () => {
     // geolocate
     const geolocationTriggers = this.uiContainer.querySelectorAll('[data-geolocate-trigger]');
-    [...geolocationTriggers].forEach((button) => button.addEventListener('click', this.geolocate));
+    [...geolocationTriggers].forEach(button => button.addEventListener('click', this.geolocate));
 
     if (this.locationList) {
       // pan to location when clicking on the list
@@ -634,7 +634,7 @@ export default class LocationsMap {
     });
 
     // listen to "close-popup" click
-    this.uiContainer.addEventListener('click', (e) => {
+    this.uiContainer.addEventListener('click', e => {
       const closeButton = (e.target as HTMLElement).closest('[data-close-popup]');
       if (closeButton) {
         e.preventDefault();
@@ -649,7 +649,7 @@ export default class LocationsMap {
    * Open a specific location
    */
   public openLocation = ({ id }: Partial<LocationData>): boolean => {
-    const marker = this.#markers.find((marker) => marker.location?.id == id);
+    const marker = this.#markers.find(marker => marker.location?.id == id);
     if (!marker || !marker.location) {
       return false;
     }
@@ -669,7 +669,7 @@ export default class LocationsMap {
 
     if (this.locationList) {
       // deselect other focused locations
-      [...this.locationList.querySelectorAll(`.location-wrapper.in-focus`)].forEach((item) =>
+      [...this.locationList.querySelectorAll(`.location-wrapper.in-focus`)].forEach(item =>
         item.classList.remove('in-focus'),
       );
 
@@ -680,7 +680,7 @@ export default class LocationsMap {
     }
 
     // make sure we have the updated distance values
-    const location = this.#locations.find((location) => location.id == marker.location?.id);
+    const location = this.#locations.find(location => location.id == marker.location?.id);
     if (!location) {
       return;
     }
@@ -699,7 +699,7 @@ export default class LocationsMap {
 
       // display popups in a container outside the map
       if (this.dispatchEvent('showPopupOutsideMap', { detail })) {
-        this.popupContainers.forEach((container) => {
+        this.popupContainers.forEach(container => {
           container.innerHTML = popupHtml;
         });
       }
@@ -724,7 +724,7 @@ export default class LocationsMap {
     if (!locationEl || target.closest('a')) return;
 
     const locationId = locationEl.dataset.property;
-    const location = this.#locations.find((location) => location.id == locationId);
+    const location = this.#locations.find(location => location.id == locationId);
     let allowed = true;
     if (location) {
       allowed = this.dispatchEvent('listClick', {
@@ -761,7 +761,7 @@ export default class LocationsMap {
     if (!locationEl || target.closest('a')) return;
 
     const locationId = locationEl.dataset.property;
-    const location = this.#locations.find((location) => location.id == locationId);
+    const location = this.#locations.find(location => location.id == locationId);
     let allowed = true;
     if (location) {
       // don't trigger twice
@@ -799,7 +799,7 @@ export default class LocationsMap {
     if (!locationEl || target.closest('a')) return;
 
     const locationId = locationEl.dataset.property;
-    const location = this.#locations.find((location) => location.id == locationId);
+    const location = this.#locations.find(location => location.id == locationId);
     if (location) {
       if (this.hoveredLocation && this.hoveredLocation.id == location.id) {
         this.hoveredLocation = null;
@@ -844,14 +844,14 @@ export default class LocationsMap {
     return new Promise((resolve, reject) => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          (position) => {
+          position => {
             if (this.dispatchEvent('geolocated', { detail: { position } })) {
               this.hasClientAddress = true;
               this.setMapPosition(position);
             }
             resolve(position);
           },
-          (error) => {
+          error => {
             alert(error.message);
             console.error(error);
             reject(error);

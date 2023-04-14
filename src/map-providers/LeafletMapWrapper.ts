@@ -32,7 +32,7 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
   }
 
   addMarkerClickCallback(callback: (marker: MapMarkerInterface) => void): this {
-    this.mapMarkers?.forEach((marker) =>
+    this.mapMarkers?.forEach(marker =>
       marker.addEventListener('click', () => {
         callback((marker as any)['originalSettings']);
       }),
@@ -200,7 +200,7 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
    * highlight a selected marker
    */
   highlightMapMarker(marker: MapMarkerInterface): this {
-    this.mapMarkers?.forEach((mapMarker) => {
+    this.mapMarkers?.forEach(mapMarker => {
       if ((mapMarker as any)['originalSettings'].location.id == marker.location?.id) {
         if (this.settings.icon) {
           const icon = this.getMarkerIcon(marker, true);
@@ -216,7 +216,7 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
    */
   unhighlightMarkers(): this {
     if (this.settings.icon) {
-      this.mapMarkers?.forEach((mapMarker) => {
+      this.mapMarkers?.forEach(mapMarker => {
         const icon = this.getMarkerIcon((mapMarker as any)['originalSettings']);
         if (icon) mapMarker.setIcon(icon);
       });
@@ -225,7 +225,7 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
   }
 
   filterMarkers(callback: (marker: MapMarkerInterface) => boolean): this {
-    this.mapMarkers?.forEach((mapMarker) => {
+    this.mapMarkers?.forEach(mapMarker => {
       const isVisible = callback((mapMarker as any)['originalSettings']);
       mapMarker.setOpacity(isVisible ? 1 : 0);
     });

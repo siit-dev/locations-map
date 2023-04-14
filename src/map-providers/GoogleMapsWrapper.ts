@@ -34,7 +34,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
   }
 
   addMarkerClickCallback(callback: (marker: MapMarkerInterface) => void): this {
-    this.mapMarkers?.forEach((marker) =>
+    this.mapMarkers?.forEach(marker =>
       marker.addListener('click', () => {
         callback((marker as any)['originalSettings']);
       }),
@@ -44,7 +44,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
 
   displayMarkerTooltip(marker: MapMarkerInterface, content: string): this {
     const mapMarker = this.mapMarkers?.find(
-      (mapMarker) => (mapMarker as any)['originalSettings'].location.id == marker.location?.id,
+      mapMarker => (mapMarker as any)['originalSettings'].location.id == marker.location?.id,
     );
     this.infoWindow = this.infoWindow || new google.maps.InfoWindow();
     this.infoWindow.setContent(content || marker.popup);
@@ -124,7 +124,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
   }
 
   addMapMarkers(markers: MapMarkerInterface[]): this {
-    this.mapMarkers = markers.map((marker) => this.createMapMarker(marker, false));
+    this.mapMarkers = markers.map(marker => this.createMapMarker(marker, false));
     return this;
   }
 
@@ -151,7 +151,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
    * highlight a selected marker
    */
   highlightMapMarker(marker: MapMarkerInterface): this {
-    this.mapMarkers?.forEach((mapMarker) => {
+    this.mapMarkers?.forEach(mapMarker => {
       if ((mapMarker as any).originalSettings.location.id == marker.location?.id) {
         if (this.settings.icon) {
           mapMarker.setIcon(this.getMarkerIcon(marker, true));
@@ -166,7 +166,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
    */
   unhighlightMarkers(): this {
     if (this.settings.icon) {
-      this.mapMarkers?.forEach((mapMarker) => {
+      this.mapMarkers?.forEach(mapMarker => {
         mapMarker.setIcon(this.getMarkerIcon((mapMarker as any).originalSettings));
       });
     }
@@ -174,7 +174,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
   }
 
   filterMarkers(callback: (marker: MapMarkerInterface) => boolean): this {
-    this.mapMarkers?.forEach((mapMarker) => {
+    this.mapMarkers?.forEach(mapMarker => {
       mapMarker.setVisible(callback((mapMarker as any).originalSettings));
     });
     return this;
@@ -208,7 +208,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
   zoomToContent(): this {
     // Zoom to the bounds of the markers
     const bounds = new google.maps.LatLngBounds();
-    this.mapMarkers?.forEach((marker) => {
+    this.mapMarkers?.forEach(marker => {
       const position = marker.getPosition();
       if (position) {
         bounds.extend(position);
