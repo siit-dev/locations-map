@@ -1,4 +1,4 @@
-import { AutocompleteResult, SearchProvider, SearchResult } from '../interfaces';
+import { AutocompleteResult, SearchProvider, SearchResult } from '../types/interfaces';
 /// <reference types="google.maps" />
 
 export default class GoogleMapsGeocoderProvider implements SearchProvider {
@@ -15,7 +15,7 @@ export default class GoogleMapsGeocoderProvider implements SearchProvider {
         (results, status) => {
           if (status == google.maps.GeocoderStatus.OK) {
             this.results =
-              results?.map((item) => {
+              results?.map(item => {
                 const location = item.geometry.location;
                 return {
                   latitude: parseFloat(location.lat().toString()),
@@ -43,7 +43,7 @@ export default class GoogleMapsGeocoderProvider implements SearchProvider {
   };
 
   getAutocompleteData = (): AutocompleteResult[] => {
-    return this.results.map((result) => {
+    return this.results.map(result => {
       return {
         title: result.name,
         result,

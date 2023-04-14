@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { AutocompleteResult, SearchProvider, SearchResult } from '../interfaces';
+import { AutocompleteResult, SearchProvider, SearchResult } from '../types/interfaces';
 
 interface NominatimResult {
   lat: number;
@@ -17,8 +17,8 @@ export default class NominatimProvider implements SearchProvider {
         'Content-Type': 'application/json',
       },
     })
-      .then((response) => (response.status === 200 ? response.json() : Promise.reject(response)))
-      .then((data) => {
+      .then(response => (response.status === 200 ? response.json() : Promise.reject(response)))
+      .then(data => {
         if (!data[0]) {
           this.results = [];
           return [];
@@ -35,7 +35,7 @@ export default class NominatimProvider implements SearchProvider {
 
         return this.results;
       })
-      .catch((e) => {
+      .catch(e => {
         this.results = [];
         throw e;
       });
@@ -52,7 +52,7 @@ export default class NominatimProvider implements SearchProvider {
   };
 
   getAutocompleteData = (): AutocompleteResult[] => {
-    return this.results.map((result) => {
+    return this.results.map(result => {
       return {
         title: result.name,
         result,

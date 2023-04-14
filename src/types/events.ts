@@ -1,4 +1,14 @@
-import { LocationContainerSettings, LocationData, LocationsMap, MapMarkerInterface, Position, SearchResult } from '.';
+import {
+  LocationContainerSettings,
+  LocationData,
+  LocationsMap,
+  MapMarkerInterface,
+  MapsWrapperInterface,
+  Position,
+  SearchResult,
+} from '../index';
+
+export {};
 
 declare global {
   interface ElementEventMap {

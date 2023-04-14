@@ -1,5 +1,5 @@
 import { GoogleIcon } from '..';
-import { Icon, LocationData } from '../interfaces';
+import { Icon, LocationData } from '../types/interfaces';
 import LocationsMap from '../LocationsMap';
 
 export interface MapPositionInterface {

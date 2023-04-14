@@ -28,7 +28,7 @@ export type {
   Icon,
   LocationContainerSettings,
   SearchProvider,
-} from './interfaces';
+} from './types/interfaces';
 
 export { default as Pagination, defaultSettings as PaginationDefaultSettings } from './pagination-provider/Pagination';
 export type { PaginationProvider, PaginationSettings } from './pagination-provider/PaginationProvider.d';
@@ -39,9 +39,9 @@ export {
 } from './autocomplete-provider/Autocomplete';
 export type { AutocompleteProvider, AutocompleteSetupSettings } from './autocomplete-provider/AutocompleteProvider.d';
 
-export type { SearchResult } from './interfaces';
-export type { AutocompleteResult } from './interfaces';
-export type { Position } from './interfaces';
+export type { SearchResult } from './types/interfaces';
+export type { AutocompleteResult } from './types/interfaces';
+export type { Position } from './types/interfaces';
 export type {
   default as MapsWrapperInterface,
   MapSettingsInterface,
