@@ -323,7 +323,7 @@ export default class LocationsMap {
   protected replaceHTMLPlaceholders = (html: string, location: LocationData): string => {
     const getDistance = (value: number): string | null => {
       let formattedValue = null;
-      if (this.hasClientAddress || this.settings.alwaysDisplayDistance) {
+      if (this.hasClientAddress || this.settings.alwaysDisplayDistance || this.geolocalized) {
         value = value > 20 ? Math.round(value) : Math.round((value + Number.EPSILON) * 10) / 10;
         formattedValue = value.toLocaleString(document.documentElement.lang);
       }
@@ -845,8 +845,8 @@ export default class LocationsMap {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            this.hasClientAddress = true;
             if (this.dispatchEvent('geolocated', { detail: { position } })) {
+              this.hasClientAddress = true;
               this.setMapPosition(position);
             }
             resolve(position);
@@ -898,10 +898,10 @@ export default class LocationsMap {
 
     this.#latitude = result.latitude;
     this.#longitude = result.longitude;
+    this.hasClientAddress = true;
     this.setMapPosition({
       coords: result,
     });
-    this.hasClientAddress = true;
 
     this.mapWrapper?.panTo(
       {
