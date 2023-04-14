@@ -48,16 +48,16 @@ Inside your HTML, create a structure similar to this:
     <!-- The map will be added here by JS -->
   </locations-map-target>
 
-  <script type="text/locations-map-template" class="template-results-single">
+  <template class="template-results-single">
     <div class="results-count">{{ results }} result</div>
-  </script>
+  </template>
 
-  <script type="text/locations-map-template" class="template-results-multiple">
+  <template class="template-results-multiple">
     <div class="results-count">{{ results }} results</div>
-  </script>
+  </template>
 
   <!-- this is the default location template -->
-  <script type="text/locations-map-template" class="template-location">
+  <template class="template-location">
     <div class="location">
       <div class="location-info">
         <h3 class="location-title">{{ name }}</h3>
@@ -70,10 +70,10 @@ Inside your HTML, create a structure similar to this:
         </div>
       </div>
     </div>
-  </script>
+  </template>
 
   <!-- popup templates -->
-  <script type="text/locations-map-template" class="template-popup-location">
+  <template class="template-popup-location">
     <div class="location in-popup">
       <div class="location">
         <button class="close-popup" data-close-popup>&times;</button>
@@ -89,9 +89,11 @@ Inside your HTML, create a structure similar to this:
         </div>
       </div>
     </div>
-  </script>
+  </template>
 </locations-map-container>
 ```
+
+Instead of using `template` tags, you can also use `script` tags with `type="text/locations-map-template`. Keep the same classes on those script tags.
 
 These elements will be used as following:
 
