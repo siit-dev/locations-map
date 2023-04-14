@@ -11,7 +11,15 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/umd/index.js"
     },
+    "./dist/": "./dist/",
+    "./src/": "./src/",
+    "./utils/": "./utils/",
+    "./esm/": "./dist/esm/",
+    "./css/": "./dist/css/",
+    "./umd/": "./dist/umd/",
+    "./types/": "./dist/types/",
     "./main.css": {
+      "style": "./dist/css/main.css",
       "import": "./dist/css/main.css",
       "require": "./dist/css/main.css"
     },
