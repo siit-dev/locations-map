@@ -1,3 +1,7 @@
-module.exports = {
-  plugins: [require('autoprefixer')],
+const config = {
+  postcssOptions: {
+    plugins: [require('autoprefixer')],
+  },
 };
+
+module.exports = config;

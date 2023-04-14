@@ -4,6 +4,7 @@ import MapsWrapperInterface, {
   MapSettingsInterface,
 } from './MapsWrapperInterface';
 import LocationsMap from '../LocationsMap';
+import 'leaflet/dist/leaflet.css';
 
 /// <reference types="leaflet" />
 

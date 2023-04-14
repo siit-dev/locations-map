@@ -2,12 +2,23 @@
 export default {
   build: {
     target: 'esnext',
-    outDir: 'lib',
+    outDir: 'dist',
     lib: {
-      entry: 'src/index.ts',
+      entry: {
+        index: 'src/index.ts',
+      },
       name: 'LocationsMap',
       fileName: (format) => `index.${format}.js`,
       formats: ['es', 'umd'],
+    },
+    rollupOptions: {
+      external: ['jquery'],
+      output: {
+        exports: 'named',
+        globals: {
+          jquery: 'jQuery',
+        },
+      },
     },
   },
 };

@@ -6,8 +6,7 @@
     "lib": ["ES2020", "dom", "dom.iterable"],
     "types": ["node", "google.maps", "markerclustererplus"],
     "skipLibCheck": true,
-    "outDir": "./lib/types/",
-    "declaration": true,
+    "outDir": "./dist/",
 
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
