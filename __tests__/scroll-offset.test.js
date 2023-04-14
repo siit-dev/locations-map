@@ -1,6 +1,6 @@
 'use strict';
 
-jest.mock('../lib/index.umd.js');
+jest.mock('../dist/index.umd.js');
 
 it('sets the css variables', () => {
   document.body.innerHTML = `
