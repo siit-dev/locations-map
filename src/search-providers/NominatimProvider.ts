@@ -10,12 +10,18 @@ interface NominatimResult {
 export default class NominatimProvider implements SearchProvider {
   results: SearchResult[] = [];
 
-  _callAPI = (url: string): Promise<SearchResult[]> => {
-    return new Promise((resolve, reject) => {
-      $.get(window.location.protocol + url, (data) => {
+  _callAPI = async (url: string): Promise<SearchResult[]> => {
+    return fetch(window.location.protocol + url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => (response.status === 200 ? response.json() : Promise.reject(response)))
+      .then((data) => {
         if (!data[0]) {
           this.results = [];
-          resolve([]);
+          return [];
         }
 
         this.results = data.map((item: NominatimResult) => {
@@ -26,12 +32,13 @@ export default class NominatimProvider implements SearchProvider {
             originalInfo: item,
           };
         });
-        resolve(this.results);
-      }).catch((e) => {
+
+        return this.results;
+      })
+      .catch((e) => {
         this.results = [];
-        reject(e);
+        throw e;
       });
-    });
   };
 
   search = async (searchFor: string): Promise<SearchResult[]> => {

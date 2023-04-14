@@ -489,7 +489,7 @@ export default class LocationsMap {
     options: CustomEventInit<Record<any, unknown>> = {},
     element: HTMLElement | null = null,
   ): boolean => {
-    if (import.meta.env.MODE === 'development') {
+    if (process.env.NODE_ENV === 'development') {
       console.log(`[locations-map] ${type}.locationsMap event`, options);
     }
     return (element || this.uiContainer).dispatchEvent(

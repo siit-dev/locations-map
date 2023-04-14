@@ -4,4 +4,4 @@ node_modules
 dist
 .local-pack
 bin/**/*
-/lib
+lib

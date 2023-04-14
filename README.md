@@ -393,3 +393,15 @@ The stores/locations lists and its pagination is created using [`list.js`](https
 The autocomplete functionality is based on [`@tarekraafat/autocomplete.js`](https://tarekraafat.github.io/autoComplete.js/).
 
 For more info, see the TypeScript definitions and the existing code.
+
+## Peer dependencies
+
+Starting with version 1.3, the optional packages have been moved to peerDependencies. This means you will need to install them in your project if you need them.
+
+- @googlemaps/js-api-loader
+- @googlemaps/markerclustererplus
+- @tarekraafat/autocomplete.js
+- jquery
+- leaflet
+- leaflet.markercluster
+- list.js

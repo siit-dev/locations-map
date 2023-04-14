@@ -2,7 +2,6 @@
 
 export { default as default } from './LocationsMap';
 export { default as LocationsMap } from './LocationsMap';
-import './scss/main.scss';
 
 export { default as GoogleMapsWrapper } from './map-providers/GoogleMapsWrapper';
 export type { GoogleMapSettingsInterface } from './map-providers/GoogleMapsWrapper';
