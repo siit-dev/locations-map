@@ -30,6 +30,8 @@ export type {
   SearchProvider,
 } from './types/interfaces';
 
+import {} from './types/events.d';
+
 export { default as Pagination, defaultSettings as PaginationDefaultSettings } from './pagination-provider/Pagination';
 export type { PaginationProvider, PaginationSettings } from './pagination-provider/PaginationProvider.d';
 

@@ -66,6 +66,8 @@ export default class LocationsMap {
   protected searchInput?: HTMLInputElement | null;
   protected popupContainers: HTMLElement[] = [];
 
+  protected templateDelimiters: [string, string] = ['{{', '}}'];
+
   selectedMarker?: MapMarkerInterface | null = null;
   hoveredLocation?: LocationData | null = null;
 
@@ -131,6 +133,7 @@ export default class LocationsMap {
       mapProvider,
       paginationProvider,
       autocompleteProvider,
+      templateDelimiters,
     } = this.settings;
 
     this.#latitude = latitude;
@@ -148,6 +151,15 @@ export default class LocationsMap {
     this.mapWrapper = mapProvider;
 
     this.#locations = this.parseLocations(locations);
+
+    // Custom delimiters.
+    if (templateDelimiters) {
+      if (!Array.isArray(templateDelimiters) || templateDelimiters.length !== 2) {
+        throw new Error('Invalid template delimiters! Must be an array with 2 elements!');
+      }
+
+      this.templateDelimiters = templateDelimiters || this.templateDelimiters;
+    }
 
     this.init();
   }
@@ -310,11 +322,19 @@ export default class LocationsMap {
     let html = '';
     const template = this.getTemplateHtmlBySelector(`.template-results-${count > 1 ? 'multiple' : 'single'}`);
     if (template) {
-      html = template.replace('{{ results }}', count.toString());
+      const regex = this.getTemplatePlaceholderRegex('results');
+      html = template.replace(regex, count.toString());
     }
     const detail = { html, count, template };
     this.dispatchEvent('updatedLocationsCount', { detail });
     return detail.html;
+  };
+
+  /**
+   * Return the regex for a template placeholder.
+   */
+  protected getTemplatePlaceholderRegex = (placeholder: string): RegExp => {
+    return new RegExp(`\\${this.templateDelimiters[0]}\\s*${placeholder}\\s*\\${this.templateDelimiters[1]}`, 'g');
   };
 
   /**
@@ -343,7 +363,7 @@ export default class LocationsMap {
       }
 
       // Replace the placeholder.
-      const regex = new RegExp(`{{\\s?${key}\\s?}}`, 'g');
+      const regex = this.getTemplatePlaceholderRegex(key);
       html = html.replace(regex, (value || '').toString());
     }
 

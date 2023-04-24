@@ -48,6 +48,7 @@ export interface LocationContainerSettings {
   focusOnHover?: boolean;
   focusOnHoverTimeout?: number;
   alwaysDisplayDistance?: boolean;
+  templateDelimiters?: [string, string];
   [key: string]: any;
 }
 

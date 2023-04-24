@@ -6,7 +6,7 @@ This library allows developers to create a map with store locations and apply fi
 
 Install using `npm` or `yarn`
 
-```npm2yarn
+```bash
 npm install --save @smartimpact-it/locations-map
 ```
 
@@ -297,6 +297,7 @@ const defaultSettings = {
   focusOnHover: false,
   focusOnHoverTimeout: 1000,
   openOnListClick: false,
+  templateDelimiters: ['{{', '}}'],
 };
 ```
 
