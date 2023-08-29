@@ -3,10 +3,10 @@ import MapsWrapperInterface, {
   MapPositionInterface,
   MapMarkerInterface,
   MapSettingsInterface,
-} from './MapsWrapperInterface';
-import LocationsMap from '../LocationsMap';
+} from '../MapsWrapperInterface';
+import LocationsMap from '../../LocationsMap';
 import { LoaderOptions } from '@googlemaps/js-api-loader';
-import { GoogleInfoWindow, MapOptions, GoogleMarker, GoogleMap, GoogleIcon } from '..';
+import { GoogleInfoWindow, MapOptions, GoogleMarker, GoogleMap, GoogleIcon } from '../..';
 
 export interface GoogleMapSettingsInterface extends MapSettingsInterface {
   apiSettings?: LoaderOptions;

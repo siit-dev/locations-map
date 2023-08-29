@@ -1,12 +1,12 @@
-import { MapMarkerInterface } from './MapsWrapperInterface';
+import { MapMarkerInterface } from '../MapsWrapperInterface';
 
 /// <reference types="leaflet" />
 /// <reference types="leaflet.markercluster" />
 
 import L, { MarkerClusterGroup } from 'leaflet';
 import 'leaflet.markercluster';
-import { LeafletMapsWrapper } from '..';
-import ClusteredMapsWrapperInterface from './ClusteredMapsWrapperInterface';
+import LeafletMapsWrapper from './LeafletMapWrapper';
+import ClusteredMapsWrapperInterface from '../ClusteredMapsWrapperInterface';
 
 export default class LeafletMapsClusteredWrapper extends LeafletMapsWrapper implements ClusteredMapsWrapperInterface {
   clusterer: MarkerClusterGroup | null = null;

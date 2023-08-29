@@ -2,14 +2,14 @@ import MapsWrapperInterface, {
   MapPositionInterface,
   MapMarkerInterface,
   MapSettingsInterface,
-} from './MapsWrapperInterface';
-import LocationsMap from '../LocationsMap';
+} from '../MapsWrapperInterface';
+import LocationsMap from '../../LocationsMap';
 import 'leaflet/dist/leaflet.css';
 
 /// <reference types="leaflet" />
 
 import L, { DivIcon, Icon, IconOptions } from 'leaflet';
-import { GoogleIcon } from '..';
+import { GoogleIcon } from '../..';
 
 export default class LeafletMapsWrapper implements MapsWrapperInterface {
   map?: L.Map;

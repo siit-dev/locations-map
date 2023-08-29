@@ -1,5 +1,10 @@
 import MarkerClusterer, { MarkerClustererOptions } from '@googlemaps/markerclustererplus';
-import { GoogleMapsWrapper, MapMarkerInterface, ClusteredMapsWrapperInterface, GoogleMapSettingsInterface } from '..';
+import {
+  GoogleMapsWrapper,
+  MapMarkerInterface,
+  ClusteredMapsWrapperInterface,
+  GoogleMapSettingsInterface,
+} from '../..';
 
 export interface GoogleMapClusteredSettingsInterface extends GoogleMapSettingsInterface {
   clusterSettings?: MarkerClustererOptions;

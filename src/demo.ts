@@ -8,6 +8,10 @@ import {
 } from '.';
 import './scss/main.scss';
 import './scss/demo.scss';
+import MapboxMapClusteredWrapper from './map-providers/Mapbox/MapboxMapClusteredWrapper';
+import MapboxMapWrapper from './map-providers/Mapbox/MapboxMapWrapper';
+
+const mapboxToken = '';
 
 document.addEventListener('DOMContentLoaded', () => {
   const locations = [
@@ -18,8 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
       postcode: '12345',
       phone: '123456789',
       city: 'Nantes',
-      longitude: 44.2,
-      latitude: 40.2,
+      longitude: 2.35,
+      latitude: 48.8,
       filterTypes: ['location', 'forest'],
     },
     {
@@ -29,8 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
       postcode: '12345',
       phone: '123456789',
       city: 'Nantes',
-      longitude: 44.2,
-      latitude: 40.2,
+      longitude: 1.55,
+      latitude: 47.2,
       filterTypes: ['location'],
     },
   ];
@@ -39,8 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!container) {
     throw new Error('Container not found');
   }
-  const mapProvider = new LeafletMapClusteredWrapper();
+  const mapProvider1 = new LeafletMapClusteredWrapper();
   const searchProvider = new NominatimProvider();
+  const mapProvider = new MapboxMapWrapper({
+    apiSettings: {
+      accessToken: mapboxToken,
+      style: 'mapbox://styles/mapbox/streets-v11',
+    },
+  });
   const paginationProvider = new Pagination({
     page: 5,
     pagination: {
