@@ -549,6 +549,7 @@ export default class LocationsMap {
     mapTarget.id = mapTarget.id || 'locations-map-target';
 
     await this.mapWrapper.initializeMap(mapTarget.id, {
+      ...this.settings,
       latitude: this.#latitude,
       longitude: this.#longitude,
       zoom: this.#zoom,
