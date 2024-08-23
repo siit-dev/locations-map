@@ -1,4 +1,3 @@
-import $ from 'jquery';
 import { AutocompleteResult, SearchProvider, SearchResult } from '../types/interfaces';
 
 interface NominatimResult {

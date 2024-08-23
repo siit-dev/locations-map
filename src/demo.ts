@@ -8,8 +8,9 @@ import {
 } from '.';
 import './scss/main.scss';
 import './scss/demo.scss';
-import MapboxMapClusteredWrapper from './map-providers/Mapbox/MapboxMapClusteredWrapper';
-import MapboxMapWrapper from './map-providers/Mapbox/MapboxMapWrapper';
+import FranceGovSearchProvider from './search-providers/FranceGovSearchProvider';
+// import MapboxMapClusteredWrapper from './map-providers/Mapbox/MapboxMapClusteredWrapper';
+// import MapboxMapWrapper from './map-providers/Mapbox/MapboxMapWrapper';
 
 const mapboxToken = '';
 
@@ -43,14 +44,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!container) {
     throw new Error('Container not found');
   }
-  const mapProvider1 = new LeafletMapClusteredWrapper();
-  const searchProvider = new NominatimProvider();
-  const mapProvider = new MapboxMapWrapper({
-    apiSettings: {
-      accessToken: mapboxToken,
-      style: 'mapbox://styles/mapbox/streets-v11',
-    },
-  });
+  const mapProvider = new LeafletMapClusteredWrapper();
+  // const searchProvider = new NominatimProvider();
+  const searchProvider = new FranceGovSearchProvider();
+  // const mapProvider1 = new MapboxMapWrapper({
+  //   apiSettings: {
+  //     accessToken: mapboxToken,
+  //     style: 'mapbox://styles/mapbox/streets-v11',
+  //   },
+  // });
   const paginationProvider = new Pagination({
     page: 5,
     pagination: {

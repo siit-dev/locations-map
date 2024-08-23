@@ -1,8 +1,17 @@
 import { AutocompleteResult, SearchProvider, SearchResult } from '../types/interfaces';
 /// <reference types="google.maps" />
 
+interface GoogleMapsGeocoderProviderOptions {
+  region?: string | null;
+}
+
 export default class GoogleMapsGeocoderProvider implements SearchProvider {
   results: SearchResult[] = [];
+  region: string | null = 'FR';
+
+  constructor(options: GoogleMapsGeocoderProviderOptions = {}) {
+    this.region = options.region || this.region;
+  }
 
   _search = (term: string): Promise<SearchResult[]> => {
     return new Promise((resolve, reject) => {
@@ -10,7 +19,7 @@ export default class GoogleMapsGeocoderProvider implements SearchProvider {
       geocoder.geocode(
         {
           address: `${term}, ` + document.documentElement.lang,
-          region: 'FR',
+          region: this.region ? this.region : undefined,
         },
         (results, status) => {
           if (status == google.maps.GeocoderStatus.OK) {
