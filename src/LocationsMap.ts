@@ -367,6 +367,25 @@ export default class LocationsMap {
       html = html.replace(regex, (value || '').toString());
     }
 
+    // Handle "data-visible-if" attributes.
+    const fragment = document.createElement('div');
+    fragment.innerHTML = html;
+    [
+      ...fragment.querySelectorAll<HTMLElement>(
+        '[data-visible-if=""], [data-visible-if="0"],[data-visible-if="false"]',
+      ),
+    ].forEach(element => element.remove());
+
+    // Handle "data-hidden-if" attributes.
+    [
+      ...fragment.querySelectorAll<HTMLElement>(
+        '[data-hidden-if]:not([data-hidden-if=""], [data-hidden-if="0"],[data-hidden-if="false"]',
+      ),
+    ].forEach(element => element.remove());
+
+    // Return the updated HTML.
+    html = fragment.innerHTML;
+
     const detail = { html, location };
     this.dispatchEvent('replaceHTMLPlaceholders', { detail });
     return detail.html;

@@ -65,7 +65,7 @@ Inside your HTML, create a structure similar to this:
           {{ address1 }} <br />
           {{ postcode }} {{ city }}
         </div>
-        <div class="phone-number">
+        <div class="phone-number" data-visible-if="{{ phone }}">
           <a href="tel:{{ phone }}"> {{ phone }} </a>
         </div>
       </div>
@@ -83,7 +83,7 @@ Inside your HTML, create a structure similar to this:
             {{ address1 }} <br />
             {{ postcode }} {{ city }}
           </div>
-          <div class="phone-number">
+          <div class="phone-number" data-visible-if="{{ phone }}">
             <a href="tel:{{ phone }}"> {{ phone }} </a>
           </div>
         </div>
