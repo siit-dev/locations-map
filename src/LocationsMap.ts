@@ -385,6 +385,7 @@ export default class LocationsMap {
 
     // Return the updated HTML.
     html = fragment.innerHTML;
+    fragment.remove();
 
     const detail = { html, location };
     this.dispatchEvent('replaceHTMLPlaceholders', { detail });
