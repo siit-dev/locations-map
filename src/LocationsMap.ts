@@ -67,9 +67,22 @@ export default class LocationsMap {
   protected popupContainers: HTMLElement[] = [];
 
   protected templateDelimiters: [string, string] = ['{{', '}}'];
+  protected cachedTemplatePlaceholderRegexes: Record<string, RegExp> = {};
 
   selectedMarker?: MapMarkerInterface | null = null;
   hoveredLocation?: LocationData | null = null;
+
+  /**
+   * Cache the templates to avoid re-querying the DOM for the same template multiple times.
+   */
+  protected cachedTemplates: Record<
+    string,
+    {
+      html: string;
+      template: HTMLTemplateElement | HTMLScriptElement;
+      timestamp: number;
+    }
+  > = {};
 
   /**
    * make a new instance of LocationMap, or return an existing one for that same HTMLElement
@@ -334,7 +347,17 @@ export default class LocationsMap {
    * Return the regex for a template placeholder.
    */
   protected getTemplatePlaceholderRegex = (placeholder: string): RegExp => {
-    return new RegExp(`\\${this.templateDelimiters[0]}\\s*${placeholder}\\s*\\${this.templateDelimiters[1]}`, 'g');
+    if (this.cachedTemplatePlaceholderRegexes[placeholder]) {
+      return this.cachedTemplatePlaceholderRegexes[placeholder];
+    }
+
+    // Cache the regex for future use.
+    this.cachedTemplatePlaceholderRegexes[placeholder] = new RegExp(
+      `\\${this.templateDelimiters[0]}\\s*${placeholder}\\s*\\${this.templateDelimiters[1]}`,
+      'g',
+    );
+
+    return this.cachedTemplatePlaceholderRegexes[placeholder];
   };
 
   /**
@@ -367,28 +390,40 @@ export default class LocationsMap {
       html = html.replace(regex, (value || '').toString());
     }
 
-    // Handle "data-visible-if" attributes.
-    const fragment = document.createElement('div');
-    fragment.innerHTML = html;
-    [
-      ...fragment.querySelectorAll<HTMLElement>(
-        '[data-visible-if=""], [data-visible-if="0"],[data-visible-if="false"]',
-      ),
-    ].forEach(element => element.remove());
+    // Handle visibility attributes.
+    const hasVisibleIf = html.includes('data-visible-if=');
+    const hasHiddenIf = html.includes('data-hidden-if=');
+    if (hasVisibleIf || hasHiddenIf) {
+      const fragment = document.createElement('div');
+      fragment.innerHTML = html;
 
-    // Handle "data-hidden-if" attributes.
-    [
-      ...fragment.querySelectorAll<HTMLElement>(
-        '[data-hidden-if]:not([data-hidden-if=""], [data-hidden-if="0"],[data-hidden-if="false"]',
-      ),
-    ].forEach(element => element.remove());
+      // Handle "data-visible-if" attributes.
+      if (hasVisibleIf) {
+        [
+          ...fragment.querySelectorAll<HTMLElement>(
+            '[data-visible-if=""], [data-visible-if="0"],[data-visible-if="false"]',
+          ),
+        ].forEach(element => element.remove());
+      }
 
-    // Return the updated HTML.
-    html = fragment.innerHTML;
-    fragment.remove();
+      // Handle "data-hidden-if" attributes.
+      if (hasHiddenIf) {
+        [
+          ...fragment.querySelectorAll<HTMLElement>(
+            '[data-hidden-if]:not([data-hidden-if=""], [data-hidden-if="0"],[data-hidden-if="false"]',
+          ),
+        ].forEach(element => element.remove());
+      }
+
+      // Return the updated HTML.
+      html = fragment.innerHTML;
+      fragment.remove();
+    }
 
     const detail = { html, location };
-    this.dispatchEvent('replaceHTMLPlaceholders', { detail });
+    if (!this.settings.preventDispatchingHtmlEvents) {
+      this.dispatchEvent('replaceHTMLPlaceholders', { detail });
+    }
     return detail.html;
   };
 
@@ -409,11 +444,13 @@ export default class LocationsMap {
         isSelected ? ' in-focus' : ''
       }" data-property="${location.id}" data-type="${location.type}">${innerHtml}</div>`;
       const detail = { html, innerHtml, isSelected, location };
-      this.dispatchEvent('generateLocationHTML', { detail });
+      if (!this.settings.preventDispatchingHtmlEvents) {
+        this.dispatchEvent('generateLocationHTML', { detail });
+      }
       return detail.html;
     }
 
-    console.error(`template with selector "${selector}" not found`);
+    console.error(`Template with selector "${selector}" not found`);
     return '';
   };
 
@@ -433,7 +470,9 @@ export default class LocationsMap {
       const innerHtml = this.replaceHTMLPlaceholders(template, location);
       const html = `<div class="location-wrapper location-popup-wrapper" data-property="${location.id}" data-type="${location.type}">${innerHtml}</div>`;
       const detail = { html, innerHtml, location };
-      this.dispatchEvent('generateLocationPopupHTML', { detail });
+      if (!this.settings.preventDispatchingHtmlEvents) {
+        this.dispatchEvent('generateLocationPopupHTML', { detail });
+      }
       return detail.html;
     }
 
@@ -1032,10 +1071,58 @@ export default class LocationsMap {
     return this.locationList || null;
   };
 
+  /**
+   * Get the HTML template by selector.
+   * This method caches the templates to avoid re-querying the DOM for the same template multiple times.
+   */
   protected getTemplateHtmlBySelector(selector: string, container: HTMLElement | Document = document): string | null {
+    // Check the cache first.
+    if (this.cachedTemplates[selector]) {
+      const cached = this.cachedTemplates[selector];
+
+      // Check if the element is still in the DOM.
+      if (!cached.template.isConnected) {
+        delete this.cachedTemplates[selector];
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            `if (process.env.NODE_ENV === 'development') {Cached template with selector "${selector}" is no longer in the DOM.`,
+          );
+        }
+        return null;
+      }
+
+      // Check if the cached template is still valid (not older than 5 minutes).
+      if (cached.timestamp < Date.now() - 5 * 60 * 1000) {
+        delete this.cachedTemplates[selector];
+      } else {
+        return cached.html;
+      }
+    }
+
+    // Query the template from the container.
     const template = container.querySelector(
       `template${selector}, script[type="text/locations-map-template"]${selector}`,
     ) as HTMLTemplateElement | HTMLScriptElement;
-    return template?.innerHTML;
+    if (!template) {
+      console.warn(`[locations-map] Template with selector "${selector}" not found.`);
+      return null;
+    }
+
+    // Store the template in the cache.
+    this.cachedTemplates[selector] = {
+      html: template.innerHTML,
+      template,
+      timestamp: Date.now(),
+    };
+
+    return this.cachedTemplates[selector].html;
   }
+
+  /**
+   * Clear the cached templates. This can be useful if the templates in the DOM change and you want to ensure that the next call to getTemplateHtmlBySelector fetches the latest version.
+   */
+  clearTemplatesCache = (): this => {
+    this.cachedTemplates = {};
+    return this;
+  };
 }

@@ -49,6 +49,7 @@ export interface LocationContainerSettings {
   focusOnHoverTimeout?: number;
   alwaysDisplayDistance?: boolean;
   templateDelimiters?: [string, string];
+  preventDispatchingHtmlEvents?: boolean;
   [key: string]: any;
 }
 
