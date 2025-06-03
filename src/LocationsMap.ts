@@ -495,6 +495,10 @@ export default class LocationsMap {
       })
       .sort((a, b) => a.distance - b.distance);
 
+    if (this.settings.customSorter) {
+      this.#locations = this.#locations.sort(this.settings.customSorter);
+    }
+
     const locations = this.#locations;
     this.dispatchEvent('updatedLocations', {
       detail: {
@@ -525,6 +529,10 @@ export default class LocationsMap {
       }
       return false;
     });
+
+    if (this.settings.customSorter) {
+      this.#filteredLocations = this.#filteredLocations.sort(this.settings.customSorter);
+    }
 
     this.mapWrapper?.filterMarkers(marker => {
       return !!this.#filteredLocations.find(location => marker.location?.id == location.id);

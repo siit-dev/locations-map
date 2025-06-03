@@ -50,6 +50,7 @@ export interface LocationContainerSettings {
   alwaysDisplayDistance?: boolean;
   templateDelimiters?: [string, string];
   preventDispatchingHtmlEvents?: boolean;
+  customSorter?: (a: LocationData, b: LocationData) => number;
   [key: string]: any;
 }
 
