@@ -51,6 +51,7 @@ export interface LocationContainerSettings {
   templateDelimiters?: [string, string];
   preventDispatchingHtmlEvents?: boolean;
   customSorter?: (a: LocationData, b: LocationData) => number;
+  customFilterer?: (location: LocationData, filters: string[]) => boolean;
   [key: string]: any;
 }
 

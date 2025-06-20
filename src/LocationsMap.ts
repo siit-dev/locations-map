@@ -530,6 +530,13 @@ export default class LocationsMap {
       return false;
     });
 
+    // Allow extra/custom filtering.
+    if (this.settings.customFilterer) {
+      this.#filteredLocations = this.#filteredLocations.filter(location => {
+        return this.settings.customFilterer!(location, this.#filters);
+      });
+    }
+
     if (this.settings.customSorter) {
       this.#filteredLocations = this.#filteredLocations.sort(this.settings.customSorter);
     }
@@ -1088,19 +1095,8 @@ export default class LocationsMap {
     if (this.cachedTemplates[selector]) {
       const cached = this.cachedTemplates[selector];
 
-      // Check if the element is still in the DOM.
-      if (!cached.template.isConnected) {
-        delete this.cachedTemplates[selector];
-        if (process.env.NODE_ENV === 'development') {
-          console.warn(
-            `if (process.env.NODE_ENV === 'development') {Cached template with selector "${selector}" is no longer in the DOM.`,
-          );
-        }
-        return null;
-      }
-
-      // Check if the cached template is still valid (not older than 5 minutes).
-      if (cached.timestamp < Date.now() - 5 * 60 * 1000) {
+      // Check if the cached template is still valid each minute.
+      if (cached.timestamp < Date.now() - 60 * 1000 && !cached.template.isConnected) {
         delete this.cachedTemplates[selector];
       } else {
         return cached.html;
