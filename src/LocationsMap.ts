@@ -8,6 +8,7 @@ import {
   PaginationProvider,
   Position,
   AutocompleteProvider,
+  AutocompleteResult,
 } from '.';
 
 export const defaultSettings = {
@@ -1046,10 +1047,22 @@ export default class LocationsMap {
   /**
    * get the results for the autocomplete dropdown
    */
-  protected getAutocompleteResults = async () => {
+  protected getAutocompleteResults = async (): Promise<AutocompleteResult[]> => {
     if (!this.searchInput) return [];
+
     await this.getSearchResults(this.searchInput.value);
-    return this.searchProvider?.getAutocompleteData() || [];
+    const data = this.searchProvider?.getAutocompleteData() || [];
+
+    // Make sure results are unique by name.
+    const uniqueResults: Record<string, AutocompleteResult> = {};
+    data.forEach(result => {
+      if (!uniqueResults[result.title]) {
+        uniqueResults[result.title] = result;
+      }
+    });
+
+    // Convert back to an array.
+    return Object.values(uniqueResults);
   };
 
   /**
