@@ -45,7 +45,8 @@ export default class LocationsMap {
   protected settings: LocationContainerSettings;
   protected displaySearch = true;
 
-  protected geolocalized = false;
+  public geolocalized = false;
+  public geolocalizedByUserAction = false;
   public hasClientAddress = false;
   #latitude: number;
   #longitude: number;
@@ -531,6 +532,18 @@ export default class LocationsMap {
       return false;
     });
 
+    // Filter locations by distance if configured.
+    if (this.settings.filterByDistance) {
+      const { maxDistance, executeOnInitialGeolocation = false } = this.settings.filterByDistance;
+      const hasAddress =
+        this.hasClientAddress || (this.geolocalized && (this.geolocalizedByUserAction || executeOnInitialGeolocation));
+      if (hasAddress && maxDistance > 0) {
+        this.#filteredLocations = this.#filteredLocations.filter(location => {
+          return !location.distance || location.distance <= maxDistance;
+        });
+      }
+    }
+
     // Allow extra/custom filtering.
     if (this.settings.customFilterer) {
       this.#filteredLocations = this.#filteredLocations.filter(location => {
@@ -643,6 +656,7 @@ export default class LocationsMap {
         navigator.geolocation.getCurrentPosition(position => {
           if (this.dispatchEvent('geolocated', { detail: { position } })) {
             this.hasClientAddress = true;
+            this.geolocalizedByUserAction = false;
             this.setMapPosition(position, true);
           }
         });
@@ -943,6 +957,7 @@ export default class LocationsMap {
           position => {
             if (this.dispatchEvent('geolocated', { detail: { position } })) {
               this.hasClientAddress = true;
+              this.geolocalizedByUserAction = true;
               this.setMapPosition(position);
             }
             resolve(position);

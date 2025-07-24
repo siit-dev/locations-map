@@ -52,6 +52,12 @@ export interface LocationContainerSettings {
   preventDispatchingHtmlEvents?: boolean;
   customSorter?: (a: LocationData, b: LocationData) => number;
   customFilterer?: (location: LocationData, filters: string[]) => boolean;
+  filterByDistance?:
+    | {
+        maxDistance: number;
+        executeOnInitialGeolocation?: boolean;
+      }
+    | false;
   [key: string]: any;
 }
 
