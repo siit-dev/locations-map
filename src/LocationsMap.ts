@@ -535,9 +535,9 @@ export default class LocationsMap {
     // Filter locations by distance if configured.
     if (this.settings.filterByDistance) {
       const { maxDistance, executeOnInitialGeolocation = false } = this.settings.filterByDistance;
-      const hasAddress =
-        this.hasClientAddress || (this.geolocalized && (this.geolocalizedByUserAction || executeOnInitialGeolocation));
-      if (hasAddress && maxDistance > 0) {
+      const hasUserActionAddress =
+        this.hasClientAddress && (!this.geolocalized || this.geolocalizedByUserAction || executeOnInitialGeolocation);
+      if (hasUserActionAddress && maxDistance > 0) {
         this.#filteredLocations = this.#filteredLocations.filter(location => {
           return !location.distance || location.distance <= maxDistance;
         });
@@ -1010,6 +1010,7 @@ export default class LocationsMap {
     this.#latitude = result.latitude;
     this.#longitude = result.longitude;
     this.hasClientAddress = true;
+    this.geolocalizedByUserAction = true;
     this.setMapPosition({
       coords: result,
     });
