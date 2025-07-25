@@ -718,6 +718,10 @@ export default class LocationsMap {
     }
   };
 
+  getSearchInput(): HTMLInputElement | null {
+    return this.searchInput ?? null;
+  }
+
   /**
    * add some event listeners
    */
