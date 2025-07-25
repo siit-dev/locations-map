@@ -242,6 +242,7 @@ if (container) {
 | `openOnListClick`      | `false`       | Scroll to the store on the map and open the popup when clicking on the store in the list |
 | `filters`              | `[]`          | The initial set of active filters                                                        |
 | `icon`                 |               | the icon to use, or a callback                                                           |
+| `filterByDistance`     | `false`       | If set, it will filter the locations by distance from the geolocated position            |
 
 The settings can also be added directly on the `locations-map-container` element, inside a `data-settings` attribute (you should put a valid JSON here). The order of "precedence" for the settings are: 1) the default settings; 2) the settings added as `data-settings`; 3) the settings set directly when creating the `LocationsMap` object.
 

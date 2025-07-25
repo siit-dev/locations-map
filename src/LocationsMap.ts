@@ -1067,11 +1067,29 @@ export default class LocationsMap {
     if (!this.searchInput) return [];
 
     await this.getSearchResults(this.searchInput.value);
-    const data = this.searchProvider?.getAutocompleteData() || [];
+    let results = this.searchProvider?.getAutocompleteData() || [];
+
+    // Limit the results only to those that have locations in the maxDistance area.
+    if (
+      this.hasClientAddress &&
+      this.settings.filterByDistance &&
+      this.settings.filterByDistance.maxDistance > 0 &&
+      this.settings.filterByDistance.limitAutocompleteResults
+    ) {
+      const { maxDistance } = this.settings.filterByDistance;
+      // Find the results that have locations within the maxDistance.
+      results = results.filter(result => {
+        const found = this.#locations.find(
+          location =>
+            distance(location.latitude, location.longitude, result.latitude, result.longitude, 'K') <= maxDistance,
+        );
+        return !!found;
+      });
+    }
 
     // Make sure results are unique by name.
     const uniqueResults: Record<string, AutocompleteResult> = {};
-    data.forEach(result => {
+    results.forEach(result => {
       if (!uniqueResults[result.title]) {
         uniqueResults[result.title] = result;
       }
