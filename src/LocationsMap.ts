@@ -1075,7 +1075,6 @@ export default class LocationsMap {
 
     // Limit the results only to those that have locations in the maxDistance area.
     if (
-      this.hasClientAddress &&
       this.settings.filterByDistance &&
       this.settings.filterByDistance.maxDistance > 0 &&
       this.settings.filterByDistance.limitAutocompleteResults
@@ -1085,7 +1084,8 @@ export default class LocationsMap {
       results = results.filter(result => {
         const found = this.#locations.find(
           location =>
-            distance(location.latitude, location.longitude, result.latitude, result.longitude, 'K') <= maxDistance,
+            distance(location.latitude, location.longitude, result.result.latitude, result.result.longitude, 'K') <=
+            maxDistance,
         );
         return !!found;
       });
