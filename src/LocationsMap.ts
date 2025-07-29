@@ -45,6 +45,7 @@ export default class LocationsMap {
   protected settings: LocationContainerSettings;
   protected displaySearch = true;
 
+  public hasSelectedSearchLocation = false;
   public geolocalized = false;
   public geolocalizedByUserAction = false;
   public hasClientAddress = false;
@@ -656,7 +657,9 @@ export default class LocationsMap {
         navigator.geolocation.getCurrentPosition(position => {
           if (this.dispatchEvent('geolocated', { detail: { position } })) {
             this.hasClientAddress = true;
+            this.geolocalized = true;
             this.geolocalizedByUserAction = false;
+            this.hasSelectedSearchLocation = false;
             this.setMapPosition(position, true);
           }
         });
@@ -935,12 +938,18 @@ export default class LocationsMap {
    * set the map position
    * @param position
    * @param firstTime
+   * @param panToLocation whether to force scrolling to the location, even if it's not the first time. Leave `null` to use the default behavior.
    */
-  setMapPosition = (position: Position | GeolocationPosition, firstTime: boolean = false): this => {
+  setMapPosition = (
+    position: Position | GeolocationPosition,
+    firstTime: boolean = false,
+    panToLocation: boolean | null = null,
+  ): this => {
     this.#latitude = position.coords.latitude;
     this.#longitude = position.coords.longitude;
-    this.geolocalized = true;
-    if (!firstTime || this.settings.scrollToGeolocation) {
+
+    const toScroll = panToLocation ?? (!firstTime || this.settings.scrollToGeolocation || panToLocation);
+    if (toScroll) {
       this.mapWrapper?.panTo({
         latitude: this.#latitude,
         longitude: this.#longitude,
@@ -962,6 +971,7 @@ export default class LocationsMap {
             if (this.dispatchEvent('geolocated', { detail: { position } })) {
               this.hasClientAddress = true;
               this.geolocalizedByUserAction = true;
+              this.hasSelectedSearchLocation = false;
               this.setMapPosition(position);
             }
             resolve(position);
@@ -1014,7 +1024,8 @@ export default class LocationsMap {
     this.#latitude = result.latitude;
     this.#longitude = result.longitude;
     this.hasClientAddress = true;
-    this.geolocalizedByUserAction = true;
+    this.geolocalizedByUserAction = false;
+    this.hasSelectedSearchLocation = true;
     this.setMapPosition({
       coords: result,
     });
@@ -1047,6 +1058,9 @@ export default class LocationsMap {
         this.settings.zoom,
       );
       this.geolocalized = false;
+      this.geolocalizedByUserAction = false;
+      this.hasSelectedSearchLocation = false;
+      this.hasClientAddress = false;
 
       this.updateContent();
     } else {
@@ -1074,12 +1088,8 @@ export default class LocationsMap {
     let results = this.searchProvider?.getAutocompleteData() || [];
 
     // Limit the results only to those that have locations in the maxDistance area.
-    if (
-      this.settings.filterByDistance &&
-      this.settings.filterByDistance.maxDistance > 0 &&
-      this.settings.filterByDistance.limitAutocompleteResults
-    ) {
-      const { maxDistance } = this.settings.filterByDistance;
+    const { maxDistance = null } = this.settings.filterAutocompleteResults || {};
+    if (maxDistance && maxDistance > 0) {
       // Find the results that have locations within the maxDistance.
       results = results.filter(result => {
         const found = this.#locations.find(
@@ -1101,6 +1111,17 @@ export default class LocationsMap {
 
     // Convert back to an array.
     return Object.values(uniqueResults);
+  };
+
+  clearUserAddress = (): this => {
+    this.hasClientAddress = false;
+    this.geolocalized = false;
+    this.geolocalizedByUserAction = false;
+    this.hasSelectedSearchLocation = false;
+    this.#latitude = 0;
+    this.#longitude = 0;
+    this.updateContent();
+    return this;
   };
 
   /**

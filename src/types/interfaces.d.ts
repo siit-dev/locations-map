@@ -56,7 +56,11 @@ export interface LocationContainerSettings {
     | {
         maxDistance: number;
         executeOnInitialGeolocation?: boolean;
-        limitAutocompleteResults?: boolean;
+      }
+    | false;
+  filterAutocompleteResults?:
+    | {
+        maxDistance: number;
       }
     | false;
   [key: string]: any;
