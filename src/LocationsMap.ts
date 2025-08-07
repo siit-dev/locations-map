@@ -537,7 +537,11 @@ export default class LocationsMap {
     if (this.settings.filterByDistance) {
       const { maxDistance, executeOnInitialGeolocation = false } = this.settings.filterByDistance;
       const hasUserActionAddress =
-        this.hasClientAddress && (!this.geolocalized || this.geolocalizedByUserAction || executeOnInitialGeolocation);
+        this.hasClientAddress &&
+        (!this.geolocalized ||
+          this.geolocalizedByUserAction ||
+          this.hasSelectedSearchLocation ||
+          executeOnInitialGeolocation);
       if (hasUserActionAddress && maxDistance > 0) {
         this.#filteredLocations = this.#filteredLocations.filter(location => {
           return !location.distance || location.distance <= maxDistance;
@@ -707,6 +711,14 @@ export default class LocationsMap {
         e.stopPropagation();
         e.preventDefault();
         this.doSearch();
+      }
+    });
+
+    this.searchForm.addEventListener('reset', e => {
+      if (this.dispatchEvent('searchReset')) {
+        e.stopPropagation();
+        e.preventDefault();
+        this.clearUserAddress();
       }
     });
 
