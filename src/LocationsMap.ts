@@ -716,8 +716,6 @@ export default class LocationsMap {
 
     this.searchForm.addEventListener('reset', e => {
       if (this.dispatchEvent('searchReset')) {
-        e.stopPropagation();
-        e.preventDefault();
         this.clearUserAddress();
       }
     });
