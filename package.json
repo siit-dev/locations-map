@@ -62,6 +62,9 @@
     },
     "./Pagination": {
       "import": "./dist/esm/pagination-provider/Pagination.js"
+    },
+    "./AdvancedPaginationProvider": {
+      "import": "./dist/esm/pagination-provider/AdvancedPaginationProvider.js"
     }
   },
   "directories": {
@@ -107,7 +110,7 @@
     "@types/lodash": "^4.14.192",
     "@types/markerclustererplus": "^2.1.33"
   },
-  "peerDependencies": {
+  "optionalDependencies": {
     "@googlemaps/js-api-loader": "^1.15.1",
     "@googlemaps/markerclustererplus": "^1.2.10",
     "@tarekraafat/autocomplete.js": "^10.2.7",
