@@ -9,10 +9,6 @@ import {
 import './scss/main.scss';
 import './scss/demo.scss';
 import FranceGovSearchProvider from './search-providers/FranceGovSearchProvider';
-// import MapboxMapClusteredWrapper from './map-providers/Mapbox/MapboxMapClusteredWrapper';
-// import MapboxMapWrapper from './map-providers/Mapbox/MapboxMapWrapper';
-
-const mapboxToken = '';
 
 document.addEventListener('DOMContentLoaded', () => {
   const locations = [

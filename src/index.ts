@@ -11,7 +11,6 @@ export { default as GoogleMapsWrapper } from './map-providers/GoogleMaps/GoogleM
 export type { GoogleMapSettingsInterface } from './map-providers/GoogleMaps/GoogleMapsWrapper';
 export { default as GoogleMapsClusteredWrapper } from './map-providers/GoogleMaps/GoogleMapsClusteredWrapper';
 export type { GoogleMapClusteredSettingsInterface } from './map-providers/GoogleMaps/GoogleMapsClusteredWrapper';
-export type { MapboxMapOptions } from './map-providers/Mapbox/MapboxMapWrapper';
 
 export { default as GoogleMapsGeocoderProvider } from './search-providers/GoogleMapsGeocoderProvider';
 
@@ -20,9 +19,6 @@ export {
   default as LeafletMapsClusteredWrapper,
   default as LeafletMapClusteredWrapper,
 } from './map-providers/Leaflet/LeafletMapClusteredWrapper';
-
-export { default as MapboxMapWrapper } from './map-providers/Mapbox/MapboxMapWrapper';
-export { default as MapboxMapClusteredWrapper } from './map-providers/Mapbox/MapboxMapClusteredWrapper';
 
 export { default as NominatimProvider } from './search-providers/NominatimProvider';
 
