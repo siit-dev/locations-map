@@ -10,6 +10,7 @@ import {
   AutocompleteProvider,
   AutocompleteResult,
 } from '.';
+import { AdvancedPaginationProvider } from './pagination-provider/AdvancedPaginationProvider';
 
 export const defaultSettings = {
   latitude: 0,
@@ -315,6 +316,14 @@ export default class LocationsMap {
   updateLocationsListContent = (): this => {
     if (!this.locationList) return this;
 
+    // If the pagination provider is an advanced one, let it handle the content update.
+    if (this.paginationProvider instanceof AdvancedPaginationProvider) {
+      this.paginationProvider.setParent(this).setTarget(this.locationList).update();
+      this.dispatchEvent('updatedLocationListContent');
+      return this;
+    }
+
+    // Hanlde the basic pagination provider or no pagination provider at all.
     let html = '';
     html += this.generateResultsCount(this.#filteredLocations.length);
     html += '<ul class="list locations-list-inner">';
@@ -334,7 +343,7 @@ export default class LocationsMap {
   /**
    * generate the html for the results count, based on a template in the markup
    */
-  protected generateResultsCount = (count: number): string => {
+  public generateResultsCount = (count: number): string => {
     let html = '';
     const template = this.getTemplateHtmlBySelector(`.template-results-${count > 1 ? 'multiple' : 'single'}`);
     if (template) {
@@ -366,7 +375,7 @@ export default class LocationsMap {
   /**
    * replace placeholders with location data inside html templates
    */
-  protected replaceHTMLPlaceholders = (html: string, location: LocationData): string => {
+  public replaceHTMLPlaceholders = (html: string, location: LocationData): string => {
     const getDistance = (value: number): string | null => {
       let formattedValue = null;
       if (this.hasClientAddress || this.settings.alwaysDisplayDistance || this.geolocalized) {
@@ -433,7 +442,7 @@ export default class LocationsMap {
   /**
    * generate the HTML for a location in the locations list
    */
-  protected generateLocationHTML = (location: LocationData): string => {
+  public generateLocationHTML = (location: LocationData): string => {
     // find the template
     const defaultSelector = `.template-location:not([data-location-type])`;
     const selector = location.type ? `.template-location[data-location-type="${location.type}"]` : defaultSelector;

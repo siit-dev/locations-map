@@ -40,7 +40,11 @@ export type {
 } from './types/interfaces';
 
 export { default as Pagination, defaultSettings as PaginationDefaultSettings } from './pagination-provider/Pagination';
-export type { PaginationProvider, PaginationSettings } from './pagination-provider/PaginationProvider.d';
+export type {
+  PaginationProvider,
+  PaginationSettings,
+  AdvancedPaginationProvider,
+} from './pagination-provider/PaginationProvider.d';
 
 export {
   default as Autocomplete,

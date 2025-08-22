@@ -12,3 +12,5 @@ export interface PaginationProvider {
   paginate: () => void;
   clear: () => void;
 }
+
+export type { AdvancedPaginationProvider } from './AdvancedPaginationProvider';
