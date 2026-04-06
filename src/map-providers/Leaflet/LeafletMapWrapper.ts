@@ -44,7 +44,7 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
     this.infoWindow =
       this.infoWindow ||
       L.popup({
-        offset: L.point(0, this.getMarkerIconHeight(marker, true) || -20),
+        offset: L.point(0, -1 * (this.getMarkerIconHeight(marker, true) || 20)),
       });
     this.infoWindow
       .setContent(content || marker.popup || '')
@@ -110,7 +110,7 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
     (mapMarker as any).originalSettings = marker;
     if (marker.popup) {
       const infoWindow: L.Popup = new L.Popup({
-        offset: L.point(0, this.getMarkerIconHeight(marker, true) || -20),
+        offset: L.point(0, -1 * (this.getMarkerIconHeight(marker, true) || 20)),
       });
       infoWindow.setContent(marker.popup);
       mapMarker.addEventListener('click', () => {
