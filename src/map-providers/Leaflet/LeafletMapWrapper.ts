@@ -41,7 +41,11 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
   }
 
   displayMarkerTooltip(marker: MapMarkerInterface, content: string): this {
-    this.infoWindow = this.infoWindow || L.popup();
+    this.infoWindow =
+      this.infoWindow ||
+      L.popup({
+        offset: L.point(0, this.getMarkerIconHeight(marker, true) || -20),
+      });
     this.infoWindow
       .setContent(content || marker.popup || '')
       .setLatLng({
@@ -105,7 +109,9 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
     mapMarker.addTo(this.map);
     (mapMarker as any).originalSettings = marker;
     if (marker.popup) {
-      const infoWindow: L.Popup = new L.Popup();
+      const infoWindow: L.Popup = new L.Popup({
+        offset: L.point(0, this.getMarkerIconHeight(marker, true) || -20),
+      });
       infoWindow.setContent(marker.popup);
       mapMarker.addEventListener('click', () => {
         infoWindow.setLatLng([marker.latitude, marker.longitude]).openOn(this.map!);
@@ -194,6 +200,45 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
     }
 
     return L.icon(iconOptions as IconOptions);
+  }
+
+  getMarkerIconHeight(marker: MapMarkerInterface, selected: boolean = false): number | undefined {
+    if (!marker.location) {
+      return undefined;
+    }
+
+    let icon = undefined;
+    if (this.settings.icon) {
+      if (this.settings.icon instanceof Function) {
+        icon = this.settings.icon(marker.location, selected);
+      } else {
+        icon = this.settings.icon;
+      }
+    }
+
+    if (!icon) {
+      return undefined;
+    }
+
+    if (typeof icon === 'string') {
+      return undefined;
+    }
+
+    if (typeof icon !== 'object') {
+      return undefined;
+    }
+
+    const genericIcon = icon as IconOptions | GoogleIcon;
+
+    if ('size' in genericIcon && Array.isArray(genericIcon.size) && genericIcon.size.length === 2) {
+      return genericIcon.size[1] as number;
+    }
+
+    if ('height' in genericIcon) {
+      return genericIcon.height as number;
+    }
+
+    return undefined;
   }
 
   /**
