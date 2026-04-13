@@ -323,7 +323,7 @@ export default class LocationsMap {
       return this;
     }
 
-    // Hanlde the basic pagination provider or no pagination provider at all.
+    // Handle the basic pagination provider or no pagination provider at all.
     let html = '';
     html += this.generateResultsCount(this.#filteredLocations.length);
     html += '<ul class="list locations-list-inner">';

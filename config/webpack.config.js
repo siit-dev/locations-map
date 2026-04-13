@@ -9,7 +9,7 @@ const webpack = require('webpack');
 const makeConfig = () => {
   const isDev = process.env.NODE_ENV === 'development';
 
-  const plugins = [new webpack.EnvironmentPlugin({ NODE_ENV: 'production' })];
+  const plugins = [new webpack.EnvironmentPlugin({ NODE_ENV: 'production', MAPBOX_ACCESS_TOKEN: '' })];
 
   if (isDev) {
     plugins.push(
@@ -100,7 +100,7 @@ const makeConfig = () => {
             {
               loader: 'file-loader',
               options: {
-                name: '../img-loader/[name].[ext]',
+                name: isDev ? '[contenthash].[ext]' : '../img-loader/[name].[ext]',
               },
             },
           ],

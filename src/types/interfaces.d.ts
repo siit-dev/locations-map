@@ -24,8 +24,8 @@ export interface IndexedLocationData {
 export type IconCallback = (
   location: LocationData,
   selected?: boolean,
-) => string | GoogleIcon | google.maps.Symbol | L.Icon | L.DivIcon;
-export type Icon = IconCallback | string | GoogleIcon | google.maps.Symbol | L.Icon | L.DivIcon;
+) => string | GoogleIcon | google.maps.Symbol | L.Icon | L.DivIcon | HTMLElement;
+export type Icon = IconCallback | string | GoogleIcon | google.maps.Symbol | L.Icon | L.DivIcon | HTMLElement;
 
 export interface LocationContainerSettings {
   latitude: number;

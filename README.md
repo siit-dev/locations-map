@@ -224,6 +224,46 @@ if (container) {
 }
 ```
 
+### Mapbox
+
+Mapbox GL JS is an optional peer dependency. Install it in the consuming project only when using a Mapbox provider.
+
+You have 2 types of Mapbox maps: with and without clusters:
+
+- `MapboxMapClusteredWrapper`
+- `MapboxMapWrapper`
+
+```javascript
+import mapboxgl from 'mapbox-gl';
+import LocationsMap, { MapboxMapClusteredWrapper } from '@smartimpact-it/locations-map';
+
+const container = document.querySelector('locations-map-container');
+if (container) {
+  const mapProvider = new MapboxMapClusteredWrapper({
+    apiSettings: {
+      accessToken: 'mapbox-token-here',
+      style: 'mapbox://styles/mapbox/streets-v11',
+    },
+    mapboxgl,
+    clusterSettings: {
+      clusterRadius: 50,
+      clusterMaxZoom: 14,
+    },
+  });
+
+  const locationsMapSettings = {
+    latitude: 44.1,
+    longitude: 10.3,
+    zoom: 8,
+    locations,
+    filters: [],
+    mapProvider,
+  };
+
+  const locationsMap = new LocationsMap(container, locationsMapSettings);
+}
+```
+
 ## Settings for the Locations Map class
 
 | Setting                | Default value | Description                                                                              |

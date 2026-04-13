@@ -5,11 +5,21 @@ import MapsWrapperInterface, {
 } from '../MapsWrapperInterface';
 import LocationsMap from '../../LocationsMap';
 import 'leaflet/dist/leaflet.css';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 /// <reference types="leaflet" />
 
 import L, { DivIcon, Icon, IconOptions } from 'leaflet';
 import { GoogleIcon } from '../..';
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 export default class LeafletMapsWrapper implements MapsWrapperInterface {
   map?: L.Map;

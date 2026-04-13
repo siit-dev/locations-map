@@ -20,6 +20,16 @@ export {
   default as LeafletMapClusteredWrapper,
 } from './map-providers/Leaflet/LeafletMapClusteredWrapper';
 
+export { default as MapboxMapWrapper } from './map-providers/Mapbox/MapboxMapWrapper';
+export type {
+  MapboxApiSettingsInterface,
+  MapboxGLModule,
+  MapboxMapOptions,
+  MapboxSettingsInterface,
+} from './map-providers/Mapbox/MapboxMapWrapper';
+export { default as MapboxMapClusteredWrapper } from './map-providers/Mapbox/MapboxMapClusteredWrapper';
+export type { MapboxClusteredSettingsInterface } from './map-providers/Mapbox/MapboxMapClusteredWrapper';
+
 export { default as NominatimProvider } from './search-providers/NominatimProvider';
 
 export type {
