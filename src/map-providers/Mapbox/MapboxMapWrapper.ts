@@ -196,6 +196,7 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
       throw new Error(`Missing map element with id ${elementId}`);
     }
 
+    mapElement.innerHTML = '';
     this.mapboxgl = this.settings.mapboxgl;
     this.mapboxgl.accessToken = this.settings.apiSettings.accessToken;
     this.map = new this.mapboxgl.Map({
