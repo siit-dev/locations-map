@@ -115,6 +115,14 @@ const makeConfig = () => {
       symlinks: false,
       cacheWithContext: false,
     },
+    externals: {
+      'mapbox-gl': {
+        commonjs: 'mapbox-gl',
+        commonjs2: 'mapbox-gl',
+        amd: 'mapbox-gl',
+        root: 'mapboxgl',
+      },
+    },
   };
 
   if (isDev) {
