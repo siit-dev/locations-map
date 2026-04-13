@@ -12,7 +12,6 @@ const presets = [
 const plugins = [
   ['@babel/plugin-proposal-decorators', { decoratorsBeforeExport: true }],
   '@babel/plugin-syntax-dynamic-import',
-  'lodash',
 ];
 
 module.exports = { plugins, presets };

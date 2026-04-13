@@ -45,6 +45,7 @@ const makeConfig = () => {
   }
 
   const config = {
+    mode: isDev ? 'development' : 'production',
     entry: entries,
     output: {
       path: path.resolve(__dirname, '../dist/umd'),
@@ -113,10 +114,6 @@ const makeConfig = () => {
       extensions: ['.wasm', '.mjs', '.js', '.json', '.jsx', '.ts', '.tsx'],
       symlinks: false,
       cacheWithContext: false,
-    },
-    externals: {
-      $: '$',
-      jquery: 'jQuery',
     },
   };
 

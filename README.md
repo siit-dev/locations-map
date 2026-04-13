@@ -443,7 +443,6 @@ Starting with version 1.3, the optional packages have been moved to peerDependen
 - @googlemaps/js-api-loader
 - @googlemaps/markerclustererplus
 - @tarekraafat/autocomplete.js
-- jquery
 - leaflet
 - leaflet.markercluster
 - list.js

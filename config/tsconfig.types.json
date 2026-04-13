@@ -4,6 +4,7 @@
     "declaration": true /* Generates corresponding '.d.ts' file. */,
     "declarationMap": true /* Generates a sourcemap for each corresponding '.d.ts' file. */,
     "emitDeclarationOnly": true,
-    "outDir": "../dist/types" /* Redirect output structure to the directory. */
+    "outDir": "../dist/types" /* Redirect output structure to the directory. */,
+    "rootDir": "../src"
   }
 }
