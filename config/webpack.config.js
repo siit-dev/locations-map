@@ -123,14 +123,14 @@ const makeConfig = () => {
         root: 'mapboxgl',
       },
     },
+    performance: {
+      hints: false,
+    },
   };
 
   if (isDev) {
-    config.performance = {
-      hints: false,
-      maxEntrypointSize: 512000,
-      maxAssetSize: 512000,
-    };
+    config.performance.maxEntrypointSize = 512000;
+    config.performance.maxAssetSize = 512000;
   }
 
   return config;
