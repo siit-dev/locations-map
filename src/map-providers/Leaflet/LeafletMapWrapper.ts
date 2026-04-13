@@ -4,7 +4,7 @@ import MapsWrapperInterface, {
   MapSettingsInterface,
 } from '../MapsWrapperInterface';
 import LocationsMap from '../../LocationsMap';
-import 'leaflet/dist/leaflet.css';
+import './leaflet.vendor.css';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';

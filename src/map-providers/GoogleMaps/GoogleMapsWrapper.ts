@@ -5,11 +5,11 @@ import MapsWrapperInterface, {
   MapSettingsInterface,
 } from '../MapsWrapperInterface';
 import LocationsMap from '../../LocationsMap';
-import { LoaderOptions } from '@googlemaps/js-api-loader';
+import { GoogleMapsAPIOptions } from './google-maps-loader';
 import { GoogleInfoWindow, MapOptions, GoogleMarker, GoogleMap, GoogleIcon } from '../..';
 
 export interface GoogleMapSettingsInterface extends MapSettingsInterface {
-  apiSettings?: LoaderOptions;
+  apiSettings?: GoogleMapsAPIOptions;
   mapSettings?: MapOptions;
 }
 
