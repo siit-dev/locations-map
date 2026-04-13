@@ -14,3 +14,4 @@ export interface PaginationProvider {
 }
 
 export type { AdvancedPaginationProvider } from './AdvancedPaginationProvider';
+export type { AdvancedPagination, AdvancedPaginationSettings } from './AdvancedPagination';

@@ -189,6 +189,9 @@
   "homepage": "https://github.com/siit-dev/locations-map",
   "jest": {
     "preset": "ts-jest",
-    "testEnvironment": "jsdom"
+    "testEnvironment": "jsdom",
+    "transform": {
+      "^.+\\.(t|j)sx?$": ["ts-jest", { "tsconfig": "config/tsconfig.jest.json" }]
+    }
   }
 }

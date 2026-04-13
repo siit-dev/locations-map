@@ -46,10 +46,15 @@ export type {
 } from './types/interfaces';
 
 export { default as Pagination, defaultSettings as PaginationDefaultSettings } from './pagination-provider/Pagination';
+export {
+  AdvancedPagination,
+  advancedPaginationDefaultSettings as AdvancedPaginationDefaultSettings,
+} from './pagination-provider/AdvancedPagination';
 export type {
   PaginationProvider,
   PaginationSettings,
   AdvancedPaginationProvider,
+  AdvancedPaginationSettings,
 } from './pagination-provider/PaginationProvider.d';
 
 export {

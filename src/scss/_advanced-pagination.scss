@@ -1,0 +1,120 @@
+.pagination-wrapper {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+// ── Status bar ───────────────────────────────────────────────────────────────
+
+.pagination-info {
+  width: 100%;
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: currentColor;
+    opacity: 0.75;
+  }
+}
+
+// ── Numbered pagination ───────────────────────────────────────────────────────
+
+nav.pagination {
+  display: flex;
+  justify-content: center;
+}
+
+ul.pagination__list {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.page-item {
+  display: inline-flex;
+
+  a.pagination__item,
+  span.pagination__item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.25rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  a.pagination__item {
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  &.active {
+    span.pagination__item {
+      background-color: currentColor;
+      color: #fff;
+      cursor: default;
+      pointer-events: none;
+    }
+  }
+
+  &.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+
+    a.pagination__item {
+      cursor: default;
+    }
+  }
+
+  &.pagination__ellipsis {
+    align-items: center;
+
+    span {
+      padding: 0 0.25rem;
+      font-size: 0.875rem;
+      pointer-events: none;
+      user-select: none;
+    }
+  }
+}
+
+// ── Infinite / load-more ──────────────────────────────────────────────────────
+
+.pagination__load-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1.5rem;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+  }
+}
+
+// Sentinel is invisible — only used by IntersectionObserver
+.pagination-sentinel {
+  width: 1px;
+  height: 1px;
+  visibility: hidden;
+  pointer-events: none;
+}
