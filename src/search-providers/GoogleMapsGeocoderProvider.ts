@@ -34,6 +34,9 @@ export default class GoogleMapsGeocoderProvider implements SearchProvider {
                 };
               }) || [];
             resolve(this.results);
+          } else if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
+            this.results = [];
+            resolve(this.results);
           } else {
             this.results = [];
             reject({ results, status });
