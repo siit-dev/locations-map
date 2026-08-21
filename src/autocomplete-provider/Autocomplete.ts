@@ -60,7 +60,13 @@ export default class Autocomplete implements AutocompleteProvider {
 
     this.autocomplete = new autoComplete({
       data: {
-        src: getResults,
+        src: async () => {
+          try {
+            return await getResults();
+          } catch (_error) {
+            return [];
+          }
+        },
         keys: ['title'],
         cache: false,
       },
