@@ -340,10 +340,7 @@ export class AdvancedPagination extends AdvancedPaginationProvider {
 
     // Pagination controls — static HTML (no components inside)
     if (totalPages > 1) {
-      this.target!.insertAdjacentHTML(
-        'beforeend',
-        this.#buildFullControlsHtml(this.#currentPage, totalPages, total),
-      );
+      this.target!.insertAdjacentHTML('beforeend', this.#buildFullControlsHtml(this.#currentPage, totalPages, total));
     }
   }
 
@@ -363,10 +360,7 @@ export class AdvancedPagination extends AdvancedPaginationProvider {
     // Controls
     const hasMore = count < total;
     if (hasMore || this.settings.showStatus) {
-      this.target!.insertAdjacentHTML(
-        'beforeend',
-        this.#buildInfiniteControlsHtml(count, total, hasMore),
-      );
+      this.target!.insertAdjacentHTML('beforeend', this.#buildInfiniteControlsHtml(count, total, hasMore));
 
       if (hasMore && (this.settings.infiniteMode === 'scroll' || this.settings.infiniteMode === 'both')) {
         const sentinel = this.target!.querySelector<HTMLElement>('[data-pagination-sentinel]');

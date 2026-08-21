@@ -290,9 +290,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     statusText: 'Showing [start]–[end] of [total] locations',
     scrollToTopOnPageChange: true,
     ...(isInfinite && {
-      infiniteMode: (paginationModeParam === 'scroll' || paginationModeParam === 'both')
-        ? (paginationModeParam as 'scroll' | 'both')
-        : 'button',
+      infiniteMode:
+        paginationModeParam === 'scroll' || paginationModeParam === 'both'
+          ? (paginationModeParam as 'scroll' | 'both')
+          : 'button',
       loadMoreText: 'Load more locations',
     }),
   });

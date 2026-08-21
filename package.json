@@ -1,6 +1,6 @@
 {
   "name": "@smartimpact-it/locations-map",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A library to display locations on a map.",
   "scripts": {
     "watch": "webpack --progress --watch --color --config config/webpack.config.js",
@@ -191,7 +191,12 @@
     "preset": "ts-jest",
     "testEnvironment": "jsdom",
     "transform": {
-      "^.+\\.(t|j)sx?$": ["ts-jest", { "tsconfig": "config/tsconfig.jest.json" }]
+      "^.+\\.(t|j)sx?$": [
+        "ts-jest",
+        {
+          "tsconfig": "config/tsconfig.jest.json"
+        }
+      ]
     }
   }
 }
