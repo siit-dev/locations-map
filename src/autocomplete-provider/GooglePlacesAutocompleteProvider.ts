@@ -1,7 +1,8 @@
-import autoComplete, { AutoCompleteConfig } from '@tarekraafat/autocomplete.js';
+import autoComplete from '@tarekraafat/autocomplete.js';
 import Autocomplete from './Autocomplete';
 import { AutocompleteSetupSettings } from './AutocompleteProvider.d';
 import { SearchResult } from '../types/interfaces';
+import type { AutoCompleteConfig } from '../types/autocomplete-config';
 
 const placesRequestOptionKeys = [
   'includedPrimaryTypes',
@@ -28,6 +29,8 @@ interface GooglePlacesPredictionItem {
   title: string;
   prediction: google.maps.places.PlacePrediction;
 }
+
+const googleMapsAttributionClass = 'locations-map-autocomplete-attribution';
 
 const splitOptions = (options: GooglePlacesAutocompleteProviderOptions) => {
   const uiSettings = { ...options } as Record<string, unknown>;
@@ -64,14 +67,17 @@ export default class GooglePlacesAutocompleteProvider extends Autocomplete {
   private suggestions: GooglePlacesPredictionItem[] = [];
   private requestVersion = 0;
   private cleanupInputListeners?: () => void;
+  private attributionElement?: HTMLElement;
 
   constructor(options: GooglePlacesAutocompleteProviderOptions = {}) {
     const { uiSettings, requestOptions } = splitOptions(options);
-    super(uiSettings);
+    super(uiSettings as Partial<AutoCompleteConfig>);
     this.requestOptions = requestOptions;
   }
 
   setup = ({ input: setupInput, onSelect }: AutocompleteSetupSettings): this => {
+    this.removeAttribution();
+    this.autocomplete?.unInit?.();
     this.cleanupInputListeners?.();
 
     this.input = setupInput;
@@ -80,8 +86,18 @@ export default class GooglePlacesAutocompleteProvider extends Autocomplete {
     }
 
     this.input.autocomplete = 'off';
+    const configuredResultsList = this.settings.resultsList;
+    const resultsList =
+      configuredResultsList && typeof configuredResultsList === 'object'
+        ? {
+            ...configuredResultsList,
+            element: this.composeResultsListElement(configuredResultsList.element),
+          }
+        : configuredResultsList;
+
     this.autocomplete = new autoComplete({
       ...this.settings,
+      resultsList,
       data: {
         src: (query: string) => this.getSuggestions(query),
         keys: ['title'],
@@ -106,18 +122,63 @@ export default class GooglePlacesAutocompleteProvider extends Autocomplete {
     };
     const resetOnBlur = () => this.resetSession();
     const resetOnFormReset = () => this.resetSession();
+    const resetOnClear = () => this.resetSession();
+    const hideAttribution = () => this.removeAttribution();
 
     input.addEventListener('input', resetIfEmpty);
     input.addEventListener('blur', resetOnBlur);
     form?.addEventListener('reset', resetOnFormReset);
+    input.addEventListener('clear', resetOnClear);
+    input.addEventListener('close', hideAttribution);
     this.cleanupInputListeners = () => {
       input.removeEventListener('selection', onSelection);
       input.removeEventListener('input', resetIfEmpty);
       input.removeEventListener('blur', resetOnBlur);
       form?.removeEventListener('reset', resetOnFormReset);
+      input.removeEventListener('clear', resetOnClear);
+      input.removeEventListener('close', hideAttribution);
+      this.removeAttribution();
     };
 
     return this;
+  };
+
+  private composeResultsListElement =
+    (consumerElement?: (list: HTMLElement, data: any) => void) =>
+    (list: HTMLElement, data: any): void => {
+      consumerElement?.(list, data);
+
+      if (!data?.results?.length) {
+        this.removeAttribution();
+        return;
+      }
+
+      const parent = list.parentElement;
+      if (!parent) {
+        return;
+      }
+
+      if (
+        this.attributionElement?.parentElement === parent &&
+        this.attributionElement.previousElementSibling === list
+      ) {
+        return;
+      }
+
+      this.removeAttribution();
+
+      const attribution = document.createElement('div');
+      attribution.className = googleMapsAttributionClass;
+      attribution.setAttribute('role', 'note');
+      attribution.tabIndex = -1;
+      attribution.textContent = 'Google Maps';
+      parent.insertBefore(attribution, list.nextSibling);
+      this.attributionElement = attribution;
+    };
+
+  private removeAttribution = (): void => {
+    this.attributionElement?.remove();
+    this.attributionElement = undefined;
   };
 
   private loadPlacesLibrary = async (): Promise<google.maps.PlacesLibrary> => {

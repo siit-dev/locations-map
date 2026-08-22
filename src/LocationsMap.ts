@@ -719,7 +719,7 @@ export default class LocationsMap {
       if (this.dispatchEvent('search')) {
         e.stopPropagation();
         e.preventDefault();
-        this.doSearch();
+        void this.doSearch().catch(() => undefined);
       }
     });
 

@@ -238,6 +238,8 @@ Google Places data is subject to the current Google Maps Platform Terms and Plac
 
 `GooglePlacesAutocompleteProvider` is only for suggestions. Form Enter and other fallback searches continue through the configured `GoogleMapsGeocoderProvider`, which also retains its existing `originalInfo` behavior. The provider is available from the package root and as `@smartimpact-it/locations-map/GooglePlacesAutocompleteProvider`.
 
+For every non-empty predictions list, the provider renders visible, non-selectable `Google Maps` attribution. Keep this attribution visible and do not hide or remove it from a custom `resultsList.element` callback.
+
 ### Leaflet with Nominatim Geocoder
 
 You have 2 types of Leaflet maps: with and without clusters:

@@ -9,6 +9,7 @@ jest.mock('leaflet/dist/images/marker-shadow.png', () => 'marker-shadow');
 
 import * as library from '../src';
 import GooglePlacesAutocompleteProvider from '../src/autocomplete-provider/GooglePlacesAutocompleteProvider';
+import LocationsMap from '../src/LocationsMap';
 
 const autoCompleteMock = jest.requireMock('@tarekraafat/autocomplete.js').default as jest.Mock;
 
@@ -74,6 +75,7 @@ it('exports the provider from the root and package subpath', () => {
 
   expect(library.GooglePlacesAutocompleteProvider).toBe(GooglePlacesAutocompleteProvider);
   expect(packageExports['./GooglePlacesAutocompleteProvider']).toEqual({
+    types: './dist/types/autocomplete-provider/GooglePlacesAutocompleteProvider.d.mts',
     import: './dist/esm/autocomplete-provider/GooglePlacesAutocompleteProvider.js',
   });
 });
@@ -153,6 +155,73 @@ it('reuses one session token while typing and rotates it after clear, reset, and
   input.dispatchEvent(new Event('blur'));
   await config.data.src('Nantes');
   expect(google.SessionToken).toHaveBeenCalledTimes(4);
+});
+
+it('rotates the session when autoComplete.js emits clear for Escape', async () => {
+  const google = setupGoogle();
+  const { config, input } = setupProvider();
+
+  await config.data.src('Par');
+  input.dispatchEvent(new Event('clear'));
+  await config.data.src('Paris');
+
+  expect(google.SessionToken).toHaveBeenCalledTimes(2);
+});
+
+it('uninitializes the previous autoComplete.js instance and avoids duplicate listeners on re-setup', () => {
+  const firstInstance = { unInit: jest.fn() };
+  const secondInstance = { unInit: jest.fn() };
+  autoCompleteMock.mockImplementationOnce(() => firstInstance).mockImplementationOnce(() => secondInstance);
+
+  const input = document.createElement('input');
+  document.body.append(input);
+  const provider = new GooglePlacesAutocompleteProvider();
+  const resetSession = jest.spyOn(provider as any, 'resetSession');
+  const settings = { getResults: jest.fn(), input, onSelect: jest.fn() };
+
+  provider.setup(settings);
+  provider.setup(settings);
+  input.dispatchEvent(new Event('clear'));
+
+  expect(firstInstance.unInit).toHaveBeenCalledTimes(1);
+  expect(secondInstance.unInit).not.toHaveBeenCalled();
+  expect(resetSession).toHaveBeenCalledTimes(1);
+});
+
+it('composes consumer resultsList callbacks with visible, non-selectable attribution', () => {
+  const consumerElement = jest.fn((list: HTMLElement) => {
+    list.dataset.consumerCallback = 'called';
+  });
+  const { config, input } = setupProvider({ resultsList: { element: consumerElement } });
+  const element = config.resultsList.element as (list: HTMLElement, data: any) => void;
+  const container = document.createElement('div');
+  const list = document.createElement('ul');
+  container.append(list);
+  document.body.append(container);
+  const data = { results: [{ value: { title: 'Paris' } }] };
+
+  element(list, data);
+  element(list, data);
+
+  const attribution = container.querySelector('.locations-map-autocomplete-attribution');
+  expect(consumerElement).toHaveBeenCalledWith(list, data);
+  expect(list.dataset.consumerCallback).toBe('called');
+  expect(attribution).not.toBeNull();
+  expect(attribution?.textContent).toBe('Google Maps');
+  expect(attribution?.tagName).toBe('DIV');
+  expect(attribution?.getAttribute('role')).toBe('note');
+  expect(attribution?.getAttribute('aria-hidden')).toBeNull();
+  expect(list.contains(attribution)).toBe(false);
+  expect(list.nextElementSibling).toBe(attribution);
+  expect(container.querySelectorAll('.locations-map-autocomplete-attribution')).toHaveLength(1);
+
+  input.dispatchEvent(new Event('close'));
+  expect(container.querySelector('.locations-map-autocomplete-attribution')).toBeNull();
+
+  const emptyList = document.createElement('ul');
+  container.append(emptyList);
+  element(emptyList, { results: [] });
+  expect(container.querySelector('.locations-map-autocomplete-attribution')).toBeNull();
 });
 
 it('suppresses an older response when requests resolve out of order', async () => {
@@ -294,4 +363,42 @@ it.each([
   await flushPromises();
   await config.data.src('Newer query');
   expect(google.SessionToken).toHaveBeenCalledTimes(2);
+});
+
+it('catches a rejected form search without propagating or updating the map', async () => {
+  const searchForm = document.createElement('form');
+  searchForm.setAttribute('data-location-search', '');
+  searchForm.innerHTML = '<input type="search" />';
+  const container = document.createElement('locations-map-container');
+  container.append(searchForm, document.createElement('locations-map-target'));
+  document.body.append(container);
+
+  const mapProvider = {
+    setParent: jest.fn().mockReturnThis(),
+    initializeMap: jest.fn().mockResolvedValue(undefined),
+    addMapMarkers: jest.fn().mockReturnThis(),
+    addMarkerClickCallback: jest.fn().mockReturnThis(),
+    filterMarkers: jest.fn().mockReturnThis(),
+    unhighlightMarkers: jest.fn().mockReturnThis(),
+  } as any;
+  const searchProvider = {
+    search: jest.fn(),
+    searchZip: jest.fn(),
+    getAutocompleteData: jest.fn().mockReturnValue([]),
+  } as any;
+
+  const map = new LocationsMap(container, {
+    displaySearch: true,
+    locations: [],
+    mapProvider,
+    searchProvider,
+    geolocateOnStart: false,
+  });
+  await flushPromises();
+  const doSearch = jest.spyOn(map, 'doSearch').mockRejectedValue(new Error('Search unavailable'));
+
+  expect(() => searchForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))).not.toThrow();
+  await flushPromises();
+  expect(doSearch).toHaveBeenCalledTimes(1);
+  expect(mapProvider.addMapMarkers).toHaveBeenCalledTimes(1);
 });
