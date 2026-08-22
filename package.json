@@ -63,6 +63,9 @@
     "./GoogleMapsGeocoderProvider": {
       "import": "./dist/esm/search-providers/GoogleMapsGeocoderProvider.js"
     },
+    "./GooglePlacesAutocompleteProvider": {
+      "import": "./dist/esm/autocomplete-provider/GooglePlacesAutocompleteProvider.js"
+    },
     "./NominatimProvider": {
       "import": "./dist/esm/search-providers/NominatimProvider.js"
     },

@@ -194,6 +194,50 @@ if (container) {
 }
 ```
 
+#### Google Places Autocomplete
+
+For Google Maps searches, `GooglePlacesAutocompleteProvider` adds Places API (New) predictions to the search input while `GoogleMapsGeocoderProvider` remains responsible for form submission (Enter) and fallback searches:
+
+```javascript
+import LocationsMap, {
+  GoogleMapsClusteredWrapper,
+  GoogleMapsGeocoderProvider,
+  GooglePlacesAutocompleteProvider,
+} from '@smartimpact-it/locations-map';
+
+const mapProvider = new GoogleMapsClusteredWrapper({
+  apiSettings: { apiKey: 'google-maps-api-key' },
+});
+
+const locationsMap = new LocationsMap(container, {
+  latitude: 44.1,
+  longitude: 10.3,
+  zoom: 8,
+  locations,
+  displaySearch: true,
+  searchProvider: new GoogleMapsGeocoderProvider(),
+  autocompleteProvider: new GooglePlacesAutocompleteProvider(),
+  mapProvider,
+});
+```
+
+The provider loads the `places` library lazily with `google.maps.importLibrary('places')`; consumers do not need to add `libraries: ['places']` to the map settings. Enable Places API (New) for the same Google Cloud project as the Maps JavaScript API key. Request options such as `includedRegionCodes`, `includedPrimaryTypes`, `language`, `locationBias`, and `locationRestriction` can be passed alongside the existing autoComplete.js UI settings.
+
+The local demo enables this configuration with `?provider=google-places&googleMapsApiKey=...` or the uncommitted `GOOGLE_MAPS_API_KEY` environment variable; no key is stored in the repository.
+
+For example, to limit predictions to French regions:
+
+```javascript
+const autocompleteProvider = new GooglePlacesAutocompleteProvider({
+  includedRegionCodes: ['fr'],
+  includedPrimaryTypes: ['(regions)'],
+});
+```
+
+Google Places data is subject to the current Google Maps Platform Terms and Places policies. Use this provider with a Google map, not a Leaflet or Mapbox map, and do not persist Places prediction or detail content in application storage. This implementation keeps predictions internal and requests only the Essentials `location` and `formattedAddress` fields after selection; follow Google's current retention and attribution requirements for any data your application handles.
+
+`GooglePlacesAutocompleteProvider` is only for suggestions. Form Enter and other fallback searches continue through the configured `GoogleMapsGeocoderProvider`, which also retains its existing `originalInfo` behavior. The provider is available from the package root and as `@smartimpact-it/locations-map/GooglePlacesAutocompleteProvider`.
+
 ### Leaflet with Nominatim Geocoder
 
 You have 2 types of Leaflet maps: with and without clusters:
@@ -383,6 +427,8 @@ new LocationsMap({
   //...
 });
 ```
+
+When using `GooglePlacesAutocompleteProvider`, `filterAutocompleteResults.maxDistance` is not supported for Places predictions. Places suggestions are returned by Google and are not filtered against the local locations list; use the provider's Places request options for geographic bias or restriction instead.
 
 ## Filtering
 
