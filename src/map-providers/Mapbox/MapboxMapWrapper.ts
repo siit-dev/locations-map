@@ -20,6 +20,7 @@ export interface MapboxMapInstance {
 }
 
 export interface MapboxMarkerInstance {
+  originalSettings?: MapMarkerInterface;
   addTo: (map: MapboxMapInstance) => this;
   getElement: () => HTMLElement;
   getLngLat: () => unknown;
@@ -103,6 +104,8 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
   protected markerDisplayValues = new WeakMap<object, string>();
   protected mapListeners: MapboxListener[] = [];
   protected markerPopups: MapboxPopupInstance[] = [];
+  protected markerClickCallbacks = new Set<(marker: MapMarkerInterface) => void>();
+  protected markerClickListeners = new WeakMap<MapboxMarkerInstance, Set<(marker: MapMarkerInterface) => void>>();
 
   constructor(settings: MapboxSettingsInterface) {
     if (!settings.mapboxgl) {
@@ -123,12 +126,27 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
   }
 
   addMarkerClickCallback(callback: (marker: MapMarkerInterface) => void): this {
-    this.mapMarkers?.forEach(marker =>
-      marker.getElement().addEventListener('click', () => {
-        callback((marker as any)['originalSettings']);
-      }),
-    );
+    this.markerClickCallbacks.add(callback);
+    this.mapMarkers?.forEach(marker => this.attachMarkerClickCallback(marker, callback));
     return this;
+  }
+
+  protected attachMarkerClickCallback(
+    marker: MapboxMarkerInstance,
+    callback: (marker: MapMarkerInterface) => void,
+  ): void {
+    const callbacks = this.markerClickListeners.get(marker) || new Set<(marker: MapMarkerInterface) => void>();
+    if (callbacks.has(callback)) {
+      return;
+    }
+
+    marker.getElement().addEventListener('click', () => {
+      if (marker.originalSettings) {
+        callback(marker.originalSettings);
+      }
+    });
+    callbacks.add(callback);
+    this.markerClickListeners.set(marker, callbacks);
   }
 
   displayMarkerTooltip(marker: MapMarkerInterface, content: string): this {
@@ -198,6 +216,7 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
   }
 
   protected removeMapMarkers(): void {
+    this.closeMarkerTooltip();
     this.markerPopups.forEach(popup => popup.remove());
     this.markerPopups = [];
     this.mapMarkers?.forEach(marker => marker.remove());
@@ -303,7 +322,7 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
 
     this.markerDisplayValues.set(mapMarker, mapMarker.getElement().style.display);
 
-    (mapMarker as any).originalSettings = marker;
+    mapMarker.originalSettings = marker;
 
     if (marker.popup) {
       const popupSettings = {
@@ -330,6 +349,9 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
   addMapMarkers(markers: MapMarkerInterface[]): this {
     this.removeMapMarkers();
     this.mapMarkers = markers.map(marker => this.createMapMarker(marker, false));
+    this.mapMarkers.forEach(mapMarker => {
+      this.markerClickCallbacks.forEach(callback => this.attachMarkerClickCallback(mapMarker, callback));
+    });
     return this;
   }
 
@@ -573,9 +595,16 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
   }
 
   protected findMapMarker(marker: MapMarkerInterface): MapboxMarkerInstance | undefined {
-    return this.mapMarkers?.find(
-      mapMarker => (mapMarker as any)['originalSettings']?.location?.id == marker.location?.id,
-    );
+    return this.mapMarkers?.find(mapMarker => this.hasSameMarkerIdentity(mapMarker.originalSettings, marker));
+  }
+
+  protected hasSameMarkerIdentity(
+    originalSettings: MapMarkerInterface | undefined,
+    marker: MapMarkerInterface,
+  ): boolean {
+    const originalId = originalSettings?.location?.id;
+    const markerId = marker.location?.id;
+    return originalId != null && markerId != null && originalId == markerId;
   }
 
   /**
@@ -583,7 +612,7 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
    */
   highlightMapMarker(marker: MapMarkerInterface): this {
     this.mapMarkers?.forEach(mapMarker => {
-      if ((mapMarker as any).originalSettings?.location?.id == marker.location?.id) {
+      if (this.hasSameMarkerIdentity(mapMarker.originalSettings, marker)) {
         if (this.settings.icon) {
           this.updateMarkerIcon(mapMarker, marker, true);
         }
@@ -598,7 +627,9 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
   unhighlightMarkers(): this {
     if (this.settings.icon) {
       this.mapMarkers?.forEach(mapMarker => {
-        this.updateMarkerIcon(mapMarker, (mapMarker as any).originalSettings);
+        if (mapMarker.originalSettings) {
+          this.updateMarkerIcon(mapMarker, mapMarker.originalSettings);
+        }
       });
     }
     return this;
@@ -606,7 +637,11 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
 
   filterMarkers(callback: (marker: MapMarkerInterface) => boolean): this {
     this.mapMarkers?.forEach(mapMarker => {
-      const isVisible = callback((mapMarker as any)['originalSettings']);
+      const originalSettings = mapMarker.originalSettings;
+      if (!originalSettings) {
+        return;
+      }
+      const isVisible = callback(originalSettings);
       mapMarker.getElement().style.display = isVisible ? (this.markerDisplayValues.get(mapMarker) ?? '') : 'none';
     });
     return this;

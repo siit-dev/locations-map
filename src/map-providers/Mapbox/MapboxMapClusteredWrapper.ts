@@ -62,9 +62,14 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
   }
 
   addMapMarkers(markers: MapMarkerInterface[]): this {
-    this.clearVisibleMarkers();
+    // Visible point markers are also the managed markers owned by the base
+    // wrapper. Let its cleanup remove those exactly once.
+    this.clearVisibleMarkers(false);
     this.removeMapMarkers();
     this.mapMarkers = markers.map(marker => this.createMapMarker(marker, true));
+    this.mapMarkers.forEach(mapMarker => {
+      this.markerClickCallbacks.forEach(callback => this.attachMarkerClickCallback(mapMarker, callback));
+    });
     this.setupClusterSourceWhenReady();
     return this;
   }
@@ -107,7 +112,7 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
       return;
     }
 
-    if ((this.map as any).isStyleLoaded && (this.map as any).isStyleLoaded()) {
+    if (this.map.isStyleLoaded?.()) {
       this.setupClusterSource();
       return;
     }
@@ -234,7 +239,7 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
   } {
     const features = (this.mapMarkers || [])
       .map((mapMarker, markerIndex): LocationFeature | null => {
-        const originalSettings = (mapMarker as any)['originalSettings'] as MapMarkerInterface | undefined;
+        const originalSettings = mapMarker.originalSettings;
         if (!originalSettings || !this.visibleMarkerFilter(originalSettings) || !originalSettings.location) {
           return null;
         }
@@ -357,7 +362,7 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
       return null;
     }
 
-    const originalSettings = (marker as any)['originalSettings'] as MapMarkerInterface | undefined;
+    const originalSettings = marker.originalSettings;
     if (!originalSettings || !this.visibleMarkerFilter(originalSettings)) {
       return null;
     }

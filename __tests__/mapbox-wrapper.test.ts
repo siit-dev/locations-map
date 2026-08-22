@@ -495,3 +495,46 @@ it('zooms to a cluster on expansion click', async () => {
 it('requires an explicit Mapbox GL instance', () => {
   expect(() => new MapboxMapWrapper({} as any)).toThrow('Missing Mapbox GL instance');
 });
+
+it('replaces regular markers and attaches callbacks to replacement markers', async () => {
+  const wrapper = new MapboxMapWrapper({ apiSettings: { accessToken: 'token' }, mapboxgl });
+  await initialize(wrapper);
+  const callback = jest.fn();
+  wrapper.addMapMarkers([makeMarker(1)]);
+  wrapper.addMarkerClickCallback(callback);
+  const firstMarker = MockMarker.instances[0];
+
+  wrapper.addMapMarkers([makeMarker(2)]);
+
+  expect(firstMarker.remove).toHaveBeenCalledTimes(1);
+  expect(wrapper.getMapMarkers()).toHaveLength(1);
+  MockMarker.instances[1].getElement().dispatchEvent(new MouseEvent('click'));
+  expect(callback).toHaveBeenCalledWith(makeMarker(2));
+  expect(callback).toHaveBeenCalledTimes(1);
+});
+
+it('does not match markers when both locations have missing IDs', async () => {
+  const wrapper = new MapboxMapWrapper({ apiSettings: { accessToken: 'token' }, mapboxgl });
+  await initialize(wrapper);
+  const markerWithoutId = { latitude: 1, longitude: 2, location: undefined };
+  wrapper.addMapMarkers([markerWithoutId]);
+
+  wrapper.displayMarkerTooltip({ latitude: 9, longitude: 8 }, 'Tooltip');
+
+  expect(MockPopup.instances[0].setLngLat).toHaveBeenCalledWith({ lng: 8, lat: 9 });
+});
+
+it('removes a visible clustered point only through managed-marker cleanup', async () => {
+  const wrapper = new MapboxMapClusteredWrapper({ apiSettings: { accessToken: 'token' }, mapboxgl });
+  await initialize(wrapper);
+  const map = MockMap.instances[0];
+  const firstMarker = makeMarker(1);
+  wrapper.addMapMarkers([firstMarker]);
+  map.features = [{ geometry: { type: 'Point', coordinates: [1, 2] }, properties: { locationId: 1, markerIndex: 0 } }];
+  map.emit('load');
+
+  const visiblePoint = MockMarker.instances[0];
+  wrapper.addMapMarkers([makeMarker(2)]);
+
+  expect(visiblePoint.remove).toHaveBeenCalledTimes(1);
+});
