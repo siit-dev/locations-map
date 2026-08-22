@@ -227,6 +227,17 @@ if (container) {
 ### Mapbox
 
 Mapbox GL JS is an optional peer dependency. Install it in the consuming project only when using a Mapbox provider.
+The current tested version is `3.29.0`; the package keeps the optional peer range at `^3.6.0` so Mapbox GL JS v3 consumers can choose a compatible v3 release:
+
+```sh
+npm install @smartimpact-it/locations-map mapbox-gl@3.29.0
+```
+
+Mapbox's provider CSS is mandatory in the consuming application. Import it alongside the provider (the package does not import optional-peer CSS at runtime):
+
+```javascript
+import 'mapbox-gl/dist/mapbox-gl.css';
+```
 
 You have 2 types of Mapbox maps: with and without clusters:
 
@@ -248,6 +259,7 @@ if (container) {
     clusterSettings: {
       clusterRadius: 50,
       clusterMaxZoom: 14,
+      // cluster: false is ignored: this wrapper always enables GeoJSON clustering.
     },
   });
 
@@ -263,6 +275,10 @@ if (container) {
   const locationsMap = new LocationsMap(container, locationsMapSettings);
 }
 ```
+
+Use `MapboxMapWrapper` instead of `MapboxMapClusteredWrapper` for an unclustered map. Both wrappers accept the same `apiSettings`, `mapSettings`, `markerSettings`, `popupSettings`, and marker/icon settings. `apiSettings.accessToken` is passed to each map instance; the provider does not mutate the imported `mapboxgl` module's global `accessToken`.
+
+Cluster source options supported by `clusterSettings` include `clusterRadius`, `clusterMaxZoom`, `clusterMinPoints`, `clusterProperties`, and the supported GeoJSON source settings (`maxzoom`, `minzoom`, `attribution`, `buffer`, `filter`, `tolerance`, `lineMetrics`, `generateId`, `promoteId`, and `dynamic`). To supply your own cluster presentation, set `clusterMarkerClassName`; custom cluster classes receive no competing inline presentation styles. Without it, the wrapper uses the default `locations-mapbox-cluster` class and inline styling.
 
 ## Settings for the Locations Map class
 

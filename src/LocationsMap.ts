@@ -264,6 +264,9 @@ export default class LocationsMap {
    */
   setLocations(locations: LocationData[]): this {
     this.#locations = this.parseLocations(locations);
+    if (this.mapWrapper?.map) {
+      this.createMapMarkers();
+    }
     this.updateContent(true);
     return this;
   }

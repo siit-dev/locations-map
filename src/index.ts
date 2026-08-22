@@ -28,7 +28,10 @@ export type {
   MapboxSettingsInterface,
 } from './map-providers/Mapbox/MapboxMapWrapper';
 export { default as MapboxMapClusteredWrapper } from './map-providers/Mapbox/MapboxMapClusteredWrapper';
-export type { MapboxClusteredSettingsInterface } from './map-providers/Mapbox/MapboxMapClusteredWrapper';
+export type {
+  MapboxClusterSettingsInterface,
+  MapboxClusteredSettingsInterface,
+} from './map-providers/Mapbox/MapboxMapClusteredWrapper';
 
 export { default as NominatimProvider } from './search-providers/NominatimProvider';
 

@@ -13,12 +13,22 @@ export interface GoogleMapSettingsInterface extends MapSettingsInterface {
   mapSettings?: MapOptions;
 }
 
+type GoogleMarkerWithSettings = GoogleMarker & {
+  originalSettings?: MapMarkerInterface;
+};
+
+type MarkerClickCallback = (marker: MapMarkerInterface) => void;
+
 export default class GoogleMapsWrapper implements MapsWrapperInterface {
   map?: GoogleMap;
-  mapMarkers?: GoogleMarker[] = [];
+  mapMarkers?: GoogleMarkerWithSettings[] = [];
   settings: GoogleMapSettingsInterface;
   infoWindow?: GoogleInfoWindow;
   parent?: LocationsMap | null = null;
+  protected markerClickCallbacks = new Set<MarkerClickCallback>();
+  protected markerClickListeners = new WeakMap<GoogleMarker, Set<MarkerClickCallback>>();
+  protected markerListeners = new WeakMap<GoogleMarker, google.maps.MapsEventListener[]>();
+  protected markerInfoWindows = new WeakMap<GoogleMarker, GoogleInfoWindow>();
 
   constructor(settings: GoogleMapSettingsInterface = {}) {
     this.settings = settings;
@@ -34,17 +44,57 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
   }
 
   addMarkerClickCallback(callback: (marker: MapMarkerInterface) => void): this {
-    this.mapMarkers?.forEach(marker =>
-      marker.addListener('click', () => {
-        callback((marker as any)['originalSettings']);
-      }),
-    );
+    this.markerClickCallbacks.add(callback);
+    this.mapMarkers?.forEach(marker => this.attachMarkerClickCallback(marker, callback));
     return this;
   }
 
+  protected attachMarkerClickCallback(marker: GoogleMarker, callback: MarkerClickCallback): void {
+    const callbacks = this.markerClickListeners.get(marker) || new Set<MarkerClickCallback>();
+    if (callbacks.has(callback)) {
+      return;
+    }
+
+    this.addMarkerListener(marker, () => {
+      const originalSettings = (marker as GoogleMarkerWithSettings).originalSettings;
+      if (originalSettings) {
+        callback(originalSettings);
+      }
+    });
+    callbacks.add(callback);
+    this.markerClickListeners.set(marker, callbacks);
+  }
+
+  protected addMarkerListener(marker: GoogleMarker, listener: () => void): void {
+    const listeners = this.markerListeners.get(marker) || [];
+    listeners.push(marker.addListener('click', listener));
+    this.markerListeners.set(marker, listeners);
+  }
+
+  protected removeMapMarkers(): void {
+    this.closeMarkerTooltip();
+    this.mapMarkers?.forEach(marker => {
+      this.markerListeners.get(marker)?.forEach(listener => listener.remove());
+      this.markerInfoWindows.get(marker)?.close();
+      if (marker.getMap?.() !== null) {
+        marker.setMap(null);
+      }
+    });
+    this.mapMarkers = [];
+  }
+
+  protected hasSameMarkerIdentity(
+    originalSettings: MapMarkerInterface | undefined,
+    marker: MapMarkerInterface,
+  ): boolean {
+    const originalId = originalSettings?.location?.id;
+    const markerId = marker.location?.id;
+    return originalId != null && markerId != null && originalId == markerId;
+  }
+
   displayMarkerTooltip(marker: MapMarkerInterface, content: string): this {
-    const mapMarker = this.mapMarkers?.find(
-      mapMarker => (mapMarker as any)['originalSettings'].location.id == marker.location?.id,
+    const mapMarker = this.mapMarkers?.find(mapMarker =>
+      this.hasSameMarkerIdentity(mapMarker.originalSettings, marker),
     );
     this.infoWindow = this.infoWindow || new google.maps.InfoWindow();
     this.infoWindow.setContent(content || marker.popup);
@@ -100,7 +150,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
   }
 
   createMapMarker(marker: MapMarkerInterface, hasClusters: boolean = false): GoogleMarker {
-    const mapMarker = new google.maps.Marker({
+    const mapMarker: GoogleMarkerWithSettings = new google.maps.Marker({
       position: {
         lat: parseFloat(marker.latitude.toString()),
         lng: parseFloat(marker.longitude.toString()),
@@ -108,12 +158,13 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
       icon: this.getMarkerIcon(marker),
       map: hasClusters ? undefined : this.map,
     });
-    (mapMarker as any).originalSettings = marker;
+    mapMarker.originalSettings = marker;
     if (marker.popup) {
       const infoWindow = new google.maps.InfoWindow({
         content: marker.popup,
       });
-      mapMarker.addListener('click', () => {
+      this.markerInfoWindows.set(mapMarker, infoWindow);
+      this.addMarkerListener(mapMarker, () => {
         infoWindow.open(this.map, mapMarker);
         if (this.settings.icon) {
           mapMarker.setIcon(this.getMarkerIcon(marker, true));
@@ -124,7 +175,11 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
   }
 
   addMapMarkers(markers: MapMarkerInterface[]): this {
+    this.removeMapMarkers();
     this.mapMarkers = markers.map(marker => this.createMapMarker(marker, false));
+    this.mapMarkers.forEach(mapMarker => {
+      this.markerClickCallbacks.forEach(callback => this.attachMarkerClickCallback(mapMarker, callback));
+    });
     return this;
   }
 
@@ -152,7 +207,7 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
    */
   highlightMapMarker(marker: MapMarkerInterface): this {
     this.mapMarkers?.forEach(mapMarker => {
-      if ((mapMarker as any).originalSettings.location.id == marker.location?.id) {
+      if (this.hasSameMarkerIdentity(mapMarker.originalSettings, marker)) {
         if (this.settings.icon) {
           mapMarker.setIcon(this.getMarkerIcon(marker, true));
         }
@@ -167,7 +222,9 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
   unhighlightMarkers(): this {
     if (this.settings.icon) {
       this.mapMarkers?.forEach(mapMarker => {
-        mapMarker.setIcon(this.getMarkerIcon((mapMarker as any).originalSettings));
+        if (mapMarker.originalSettings) {
+          mapMarker.setIcon(this.getMarkerIcon(mapMarker.originalSettings));
+        }
       });
     }
     return this;
@@ -175,7 +232,10 @@ export default class GoogleMapsWrapper implements MapsWrapperInterface {
 
   filterMarkers(callback: (marker: MapMarkerInterface) => boolean): this {
     this.mapMarkers?.forEach(mapMarker => {
-      mapMarker.setVisible(callback((mapMarker as any).originalSettings));
+      const originalSettings = mapMarker.originalSettings;
+      if (originalSettings) {
+        mapMarker.setVisible(callback(originalSettings));
+      }
     });
     return this;
   }

@@ -13,11 +13,14 @@ export interface MapboxMapInstance {
   getSource: (id: string) => unknown;
   isStyleLoaded?: () => boolean;
   on: (type: string, listener: (...args: any[]) => void) => unknown;
+  off?: (type: string, listener: (...args: any[]) => void) => unknown;
   once: (type: string, listener: (...args: any[]) => void) => unknown;
+  remove?: () => unknown;
   querySourceFeatures: (sourceId: string) => Array<MapboxGeoJSONFeature>;
 }
 
 export interface MapboxMarkerInstance {
+  originalSettings?: MapMarkerInterface;
   addTo: (map: MapboxMapInstance) => this;
   getElement: () => HTMLElement;
   getLngLat: () => unknown;
@@ -36,7 +39,7 @@ export interface MapboxPopupInstance {
 }
 
 export interface MapboxGLModule {
-  accessToken: string;
+  accessToken?: string;
   Map: new (options: Record<string, any>) => MapboxMapInstance;
   Marker: new (options?: Record<string, any>) => MapboxMarkerInstance;
   Popup: new (options?: Record<string, any>) => MapboxPopupInstance;
@@ -84,6 +87,13 @@ interface IconDescriptor {
   anchor?: [number, number];
 }
 
+type MapboxIconLike = Record<string, any>;
+
+type MapboxListener = {
+  type: string;
+  listener: (...args: any[]) => void;
+};
+
 export default class MapboxMapWrapper implements MapsWrapperInterface {
   map?: MapboxMapInstance;
   mapMarkers?: MapboxMarkerInstance[] = [];
@@ -91,6 +101,11 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
   infoWindow?: MapboxPopupInstance;
   parent?: LocationsMap | null = null;
   protected mapboxgl?: MapboxGLModule;
+  protected markerDisplayValues = new WeakMap<object, string>();
+  protected mapListeners: MapboxListener[] = [];
+  protected markerPopups: MapboxPopupInstance[] = [];
+  protected markerClickCallbacks = new Set<(marker: MapMarkerInterface) => void>();
+  protected markerClickListeners = new WeakMap<MapboxMarkerInstance, Set<(marker: MapMarkerInterface) => void>>();
 
   constructor(settings: MapboxSettingsInterface) {
     if (!settings.mapboxgl) {
@@ -111,12 +126,27 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
   }
 
   addMarkerClickCallback(callback: (marker: MapMarkerInterface) => void): this {
-    this.mapMarkers?.forEach(marker =>
-      marker.getElement().addEventListener('click', () => {
-        callback((marker as any)['originalSettings']);
-      }),
-    );
+    this.markerClickCallbacks.add(callback);
+    this.mapMarkers?.forEach(marker => this.attachMarkerClickCallback(marker, callback));
     return this;
+  }
+
+  protected attachMarkerClickCallback(
+    marker: MapboxMarkerInstance,
+    callback: (marker: MapMarkerInterface) => void,
+  ): void {
+    const callbacks = this.markerClickListeners.get(marker) || new Set<(marker: MapMarkerInterface) => void>();
+    if (callbacks.has(callback)) {
+      return;
+    }
+
+    marker.getElement().addEventListener('click', () => {
+      if (marker.originalSettings) {
+        callback(marker.originalSettings);
+      }
+    });
+    callbacks.add(callback);
+    this.markerClickListeners.set(marker, callbacks);
   }
 
   displayMarkerTooltip(marker: MapMarkerInterface, content: string): this {
@@ -132,12 +162,21 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
           lat: parseFloat(marker.latitude.toString()),
         };
 
+    const popupSettings = {
+      ...(this.settings.popupSettings || {}),
+    };
+    if (!Object.prototype.hasOwnProperty.call(popupSettings, 'offset')) {
+      const popupOffset = this.getMarkerOffset(this.getMarkerIconDescriptor(marker));
+      if (popupOffset) {
+        popupSettings.offset = popupOffset;
+      }
+    }
     this.infoWindow =
       this.infoWindow ||
       new this.mapboxgl.Popup({
         closeButton: false,
         closeOnClick: false,
-        ...(this.settings.popupSettings || {}),
+        ...popupSettings,
       });
 
     this.infoWindow
@@ -145,15 +184,61 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
       .setHTML(content || marker.popup || '')
       .addTo(this.map);
 
-    this.infoWindow.once('close', () => this.parent?.dispatchEvent('closedPopup'));
+    this.infoWindow.once('close', () => this.parent?.dispatchEvent?.('closedPopup'));
     return this;
   }
 
   closeMarkerTooltip(): this {
     if (this.infoWindow) {
-      this.infoWindow.remove();
+      const infoWindow = this.infoWindow;
+      this.infoWindow = undefined;
+      infoWindow.remove();
     }
     return this;
+  }
+
+  /** Release provider-owned resources before replacing the Mapbox instance. */
+  protected removeMapResources(): void {
+    this.closeMarkerTooltip();
+    this.removeMapMarkers();
+    this.clearAdditionalMarkers();
+
+    this.mapListeners.forEach(({ type, listener }) => this.map?.off?.(type, listener));
+    this.mapListeners = [];
+    this.map?.remove?.();
+    this.map = undefined;
+    this.markerDisplayValues = new WeakMap<object, string>();
+  }
+
+  /** Hook for wrappers that own additional markers or source state. */
+  protected clearAdditionalMarkers(): void {
+    return;
+  }
+
+  protected removeMapMarkers(): void {
+    this.closeMarkerTooltip();
+    this.markerPopups.forEach(popup => popup.remove());
+    this.markerPopups = [];
+    this.mapMarkers?.forEach(marker => marker.remove());
+    this.mapMarkers = [];
+  }
+
+  protected addMapListener(type: string, listener: (...args: any[]) => void): void {
+    if (!this.map) {
+      return;
+    }
+
+    this.map.on(type, listener);
+    this.mapListeners.push({ type, listener });
+  }
+
+  protected addMapOnceListener(type: string, listener: (...args: any[]) => void): void {
+    if (!this.map) {
+      return;
+    }
+
+    this.map.once(type, listener);
+    this.mapListeners.push({ type, listener });
   }
 
   protected getMapboxSettings(): Record<string, any> {
@@ -196,9 +281,9 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
       throw new Error(`Missing map element with id ${elementId}`);
     }
 
+    this.removeMapResources();
     mapElement.innerHTML = '';
     this.mapboxgl = this.settings.mapboxgl;
-    this.mapboxgl.accessToken = this.settings.apiSettings.accessToken;
     this.map = new this.mapboxgl.Map({
       container: mapElement,
       ...this.getMapboxSettings(),
@@ -218,6 +303,8 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
     };
     if (iconDescriptor.element) {
       markerOptions.element = iconDescriptor.element;
+    } else if (typeof HTMLElement !== 'undefined' && markerOptions.element instanceof HTMLElement) {
+      markerOptions.element = markerOptions.element.cloneNode(true);
     }
     const offset = this.getMarkerOffset(iconDescriptor);
     if (offset && !markerOptions.offset) {
@@ -233,22 +320,38 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
       mapMarker.addTo(this.map);
     }
 
-    (mapMarker as any).originalSettings = marker;
+    this.markerDisplayValues.set(mapMarker, mapMarker.getElement().style.display);
+
+    mapMarker.originalSettings = marker;
 
     if (marker.popup) {
+      const popupSettings = {
+        ...(this.settings.popupSettings || {}),
+      };
+      if (!Object.prototype.hasOwnProperty.call(popupSettings, 'offset')) {
+        const popupOffset = this.getMarkerOffset(iconDescriptor);
+        if (popupOffset) {
+          popupSettings.offset = popupOffset;
+        }
+      }
       const infoWindow = new this.mapboxgl.Popup({
         closeButton: false,
         closeOnClick: false,
-        ...(this.settings.popupSettings || {}),
+        ...popupSettings,
       }).setHTML(marker.popup);
       mapMarker.setPopup(infoWindow);
+      this.markerPopups.push(infoWindow);
     }
 
     return mapMarker;
   }
 
   addMapMarkers(markers: MapMarkerInterface[]): this {
+    this.removeMapMarkers();
     this.mapMarkers = markers.map(marker => this.createMapMarker(marker, false));
+    this.mapMarkers.forEach(mapMarker => {
+      this.markerClickCallbacks.forEach(callback => this.attachMarkerClickCallback(mapMarker, callback));
+    });
     return this;
   }
 
@@ -275,6 +378,9 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
     }
 
     if (typeof icon === 'string') {
+      if (/^\s*</.test(icon)) {
+        return this.createHtmlIconDescriptor({ html: icon });
+      }
       return this.createImageIconDescriptor({ url: icon });
     }
 
@@ -288,28 +394,38 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
       return {};
     }
 
-    const genericIcon = icon as GoogleIcon & {
-      width?: number;
-      height?: number;
-      size?: any;
-      scaledSize?: any;
-      iconSize?: any;
-      iconAnchor?: any;
-      iconUrl?: string;
-    };
-    const url = genericIcon.url || genericIcon.iconUrl;
+    const genericIcon = icon as GoogleIcon & MapboxIconLike;
+    const iconOptions =
+      genericIcon.options && typeof genericIcon.options === 'object'
+        ? { ...genericIcon.options, ...genericIcon }
+        : genericIcon;
+    const url = iconOptions.url || iconOptions.iconUrl;
 
-    if (!url) {
-      return {};
+    if (typeof url === 'string' && url) {
+      return this.createImageIconDescriptor({
+        url,
+        size: iconOptions.scaledSize || iconOptions.size || iconOptions.iconSize,
+        width: iconOptions.width,
+        height: iconOptions.height,
+        anchor: iconOptions.anchor || iconOptions.iconAnchor,
+      });
     }
 
-    return this.createImageIconDescriptor({
-      url,
-      size: genericIcon.scaledSize || genericIcon.size || genericIcon.iconSize,
-      width: genericIcon.width,
-      height: genericIcon.height,
-      anchor: genericIcon.anchor || genericIcon.iconAnchor,
-    });
+    const html = iconOptions.html;
+    if (typeof html === 'string' || (typeof HTMLElement !== 'undefined' && html instanceof HTMLElement)) {
+      return this.createHtmlIconDescriptor({
+        html,
+        className: iconOptions.className,
+        size: iconOptions.iconSize || iconOptions.size,
+        width: iconOptions.width,
+        height: iconOptions.height,
+        anchor: iconOptions.anchor || iconOptions.iconAnchor,
+      });
+    }
+
+    // Google Symbol/path icons have no portable DOM representation. Let Mapbox
+    // create its normal marker rather than rendering an incomplete icon.
+    return {};
   }
 
   protected createImageIconDescriptor(icon: {
@@ -342,16 +458,48 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
     };
   }
 
+  protected createHtmlIconDescriptor(icon: {
+    html: string | HTMLElement;
+    className?: string;
+    size?: any;
+    width?: number;
+    height?: number;
+    anchor?: any;
+  }): IconDescriptor {
+    const width = this.getDimensionValue(icon.size, 'width') || icon.width;
+    const height = this.getDimensionValue(icon.size, 'height') || icon.height;
+    const child = document.createElement('div');
+    if (icon.className) {
+      child.className = icon.className;
+    }
+    if (typeof icon.html === 'string') {
+      child.innerHTML = icon.html;
+    } else {
+      child.appendChild(icon.html.cloneNode(true));
+    }
+
+    const element = this.createMarkerElement(child, width, height);
+    return {
+      element,
+      width,
+      height,
+      anchor: this.getAnchorValue(icon.anchor),
+    };
+  }
+
   protected createMarkerElement(child: HTMLElement, width?: number, height?: number): HTMLElement {
     const element = document.createElement('div');
     element.className = 'locations-mapbox-marker';
+    child.dataset.locationsMapboxMarkerContent = 'true';
     element.style.lineHeight = '0';
     element.style.cursor = 'pointer';
     if (width) {
       element.style.width = `${width}px`;
+      element.dataset.locationsMapboxOwnedWidth = 'true';
     }
     if (height) {
       element.style.height = `${height}px`;
+      element.dataset.locationsMapboxOwnedHeight = 'true';
     }
     element.appendChild(child);
     return element;
@@ -368,9 +516,35 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
     }
 
     const element = mapMarker.getElement();
-    element.className = iconDescriptor.element.className;
-    element.innerHTML = iconDescriptor.element.innerHTML;
-    element.setAttribute('style', iconDescriptor.element.getAttribute('style') || '');
+    const currentContent = Array.from(element.children).find(
+      child => child instanceof HTMLElement && child.dataset.locationsMapboxMarkerContent === 'true',
+    );
+    const nextContent = Array.from(iconDescriptor.element.children).find(
+      child => child instanceof HTMLElement && child.dataset.locationsMapboxMarkerContent === 'true',
+    );
+    if (nextContent) {
+      const replacement = nextContent.cloneNode(true);
+      if (currentContent) {
+        currentContent.replaceWith(replacement);
+      } else {
+        element.appendChild(replacement);
+      }
+    }
+
+    if (iconDescriptor.width) {
+      element.style.width = `${iconDescriptor.width}px`;
+      element.dataset.locationsMapboxOwnedWidth = 'true';
+    } else if (element.dataset.locationsMapboxOwnedWidth === 'true') {
+      element.style.removeProperty('width');
+      delete element.dataset.locationsMapboxOwnedWidth;
+    }
+    if (iconDescriptor.height) {
+      element.style.height = `${iconDescriptor.height}px`;
+      element.dataset.locationsMapboxOwnedHeight = 'true';
+    } else if (element.dataset.locationsMapboxOwnedHeight === 'true') {
+      element.style.removeProperty('height');
+      delete element.dataset.locationsMapboxOwnedHeight;
+    }
 
     const offset = this.getMarkerOffset(iconDescriptor);
     if (offset) {
@@ -409,7 +583,11 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
   }
 
   protected getMarkerOffset(iconDescriptor: IconDescriptor): [number, number] | undefined {
-    if (!iconDescriptor.anchor || !iconDescriptor.width || !iconDescriptor.height) {
+    if (
+      !iconDescriptor.anchor ||
+      typeof iconDescriptor.width !== 'number' ||
+      typeof iconDescriptor.height !== 'number'
+    ) {
       return undefined;
     }
 
@@ -417,9 +595,16 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
   }
 
   protected findMapMarker(marker: MapMarkerInterface): MapboxMarkerInstance | undefined {
-    return this.mapMarkers?.find(
-      mapMarker => (mapMarker as any)['originalSettings'].location.id == marker.location?.id,
-    );
+    return this.mapMarkers?.find(mapMarker => this.hasSameMarkerIdentity(mapMarker.originalSettings, marker));
+  }
+
+  protected hasSameMarkerIdentity(
+    originalSettings: MapMarkerInterface | undefined,
+    marker: MapMarkerInterface,
+  ): boolean {
+    const originalId = originalSettings?.location?.id;
+    const markerId = marker.location?.id;
+    return originalId != null && markerId != null && originalId == markerId;
   }
 
   /**
@@ -427,7 +612,7 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
    */
   highlightMapMarker(marker: MapMarkerInterface): this {
     this.mapMarkers?.forEach(mapMarker => {
-      if ((mapMarker as any).originalSettings.location.id == marker.location?.id) {
+      if (this.hasSameMarkerIdentity(mapMarker.originalSettings, marker)) {
         if (this.settings.icon) {
           this.updateMarkerIcon(mapMarker, marker, true);
         }
@@ -442,7 +627,9 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
   unhighlightMarkers(): this {
     if (this.settings.icon) {
       this.mapMarkers?.forEach(mapMarker => {
-        this.updateMarkerIcon(mapMarker, (mapMarker as any).originalSettings);
+        if (mapMarker.originalSettings) {
+          this.updateMarkerIcon(mapMarker, mapMarker.originalSettings);
+        }
       });
     }
     return this;
@@ -450,10 +637,18 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
 
   filterMarkers(callback: (marker: MapMarkerInterface) => boolean): this {
     this.mapMarkers?.forEach(mapMarker => {
-      const isVisible = callback((mapMarker as any)['originalSettings']);
-      mapMarker.getElement().style.display = isVisible ? 'block' : 'none';
+      const originalSettings = mapMarker.originalSettings;
+      if (!originalSettings) {
+        return;
+      }
+      const isVisible = callback(originalSettings);
+      mapMarker.getElement().style.display = isVisible ? (this.markerDisplayValues.get(mapMarker) ?? '') : 'none';
     });
     return this;
+  }
+
+  protected restoreMarkerDisplay(mapMarker: MapboxMarkerInstance): void {
+    mapMarker.getElement().style.display = this.markerDisplayValues.get(mapMarker) ?? '';
   }
 
   getMap() {
