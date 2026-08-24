@@ -12,5 +12,6 @@ export interface AutocompleteProvider {
 
   setParent: (parent: LocationsMap) => this;
   setup: (settings: AutocompleteSetupSettings) => any;
+  getResults?: (query?: string) => Promise<AutocompleteResult[]>;
   start?: (query?: string) => void;
 }

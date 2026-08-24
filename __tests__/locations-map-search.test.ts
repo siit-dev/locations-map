@@ -24,12 +24,13 @@ const makeMapProvider = () => ({
   closeMarkerTooltip: jest.fn().mockReturnThis(),
 });
 
-const makeAutocompleteProvider = (start?: jest.Mock) => ({
+const makeAutocompleteProvider = (start?: jest.Mock, getResults?: jest.Mock) => ({
   parent: null,
   input: null,
   setParent: jest.fn().mockReturnThis(),
   setup: jest.fn(),
   ...(start ? { start } : {}),
+  ...(getResults ? { getResults } : {}),
 });
 
 const makeSearchProvider = (autocompleteData: any[], searchResults: any[]) => ({
@@ -156,6 +157,27 @@ it('starts autocomplete when all raw results are outside the configured distance
   expect(start).toHaveBeenCalledWith('New York');
 });
 
+it('uses the built-in provider query normalization for submit searches', async () => {
+  const nearby = makeSearchResult('Paris, France', 48.8566, 2.3522);
+  const normalize = jest.fn((value: string) => value.trim().toLowerCase());
+  const searchProvider = makeSearchProvider([{ title: nearby.name, result: nearby }], [nearby]);
+  const autocompleteProvider = new Autocomplete({ query: normalize });
+  const { map, input } = await createMap({
+    locations: [{ id: 1, latitude: 48.8566, longitude: 2.3522 }],
+    searchProvider,
+    autocompleteProvider,
+    filterAutocompleteResults: { maxDistance: 60 },
+  });
+  const updateFromSearch = jest.spyOn(map as any, 'updateFromSearch');
+  input.value = '  PARIS  ';
+
+  await map.doSearch();
+
+  expect(normalize).toHaveBeenCalledWith('  PARIS  ');
+  expect(searchProvider.search).toHaveBeenCalledWith('paris');
+  expect(updateFromSearch).toHaveBeenCalledWith(nearby);
+});
+
 it('selects the first candidate remaining after distance filtering', async () => {
   const farAway = makeSearchResult('New York, USA', 40.7128, -74.006);
   const nearby = makeSearchResult('Paris, France', 48.8566, 2.3522);
@@ -213,4 +235,22 @@ it('does not require custom autocomplete providers to implement start', async ()
   input.value = 'New York';
 
   await expect(map.doSearch()).resolves.toBeUndefined();
+});
+
+it('falls back to map autocomplete results for custom providers without getResults', async () => {
+  const nearby = makeSearchResult('Paris, France', 48.8566, 2.3522);
+  const searchProvider = makeSearchProvider([{ title: nearby.name, result: nearby }], [nearby]);
+  const { map, input } = await createMap({
+    locations: [{ id: 1, latitude: 48.8566, longitude: 2.3522 }],
+    searchProvider,
+    autocompleteProvider: makeAutocompleteProvider(),
+    filterAutocompleteResults: { maxDistance: 60 },
+  });
+  const updateFromSearch = jest.spyOn(map as any, 'updateFromSearch');
+  input.value = 'Paris';
+
+  await map.doSearch();
+
+  expect(searchProvider.search).toHaveBeenCalledWith('Paris');
+  expect(updateFromSearch).toHaveBeenCalledWith(nearby);
 });
