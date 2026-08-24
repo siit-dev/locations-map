@@ -1,6 +1,6 @@
 {
   "name": "@smartimpact-it/locations-map",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "A library to display locations on a map.",
   "scripts": {
     "watch": "webpack --progress --watch --color --config config/webpack.config.js",
