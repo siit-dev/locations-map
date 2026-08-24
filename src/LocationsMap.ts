@@ -1083,7 +1083,9 @@ export default class LocationsMap {
 
       this.updateContent();
     } else {
-      const results = await this.getAutocompleteResults(searchValue);
+      const results = this.autocompleteProvider?.getResults
+        ? await this.autocompleteProvider.getResults(searchValue)
+        : await this.getAutocompleteResults(searchValue);
       if (results.length) {
         this.updateFromSearch(results[0].result);
       } else {

@@ -58,3 +58,40 @@ it('passes an explicit query to the result loader', async () => {
 
   expect(getResults).toHaveBeenCalledWith('Paris');
 });
+
+it('normalizes manual queries once before calling the retained result loader', async () => {
+  const normalize = jest.fn((value: string) => value.trim().toLowerCase());
+  const getResults = jest.fn().mockResolvedValue([]);
+  const input = document.createElement('input');
+  const provider = new Autocomplete({ query: normalize });
+
+  provider.setup({
+    getResults,
+    input,
+    onSelect: jest.fn(),
+  });
+
+  await provider.getResults?.('  PARIS  ');
+
+  expect(normalize).toHaveBeenCalledTimes(1);
+  expect(getResults).toHaveBeenCalledWith('paris');
+});
+
+it('keeps autoComplete.js data sources on the raw retained loader', async () => {
+  const normalize = jest.fn((value: string) => value.trim().toLowerCase());
+  const getResults = jest.fn().mockResolvedValue([]);
+  const input = document.createElement('input');
+  const provider = new Autocomplete({ query: normalize });
+
+  provider.setup({
+    getResults,
+    input,
+    onSelect: jest.fn(),
+  });
+
+  const config = autoCompleteMock.mock.calls[0][0];
+  await config.data.src('paris');
+
+  expect(normalize).not.toHaveBeenCalled();
+  expect(getResults).toHaveBeenCalledWith('paris');
+});
