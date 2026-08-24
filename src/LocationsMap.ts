@@ -1083,9 +1083,11 @@ export default class LocationsMap {
 
       this.updateContent();
     } else {
-      const results = await this.getSearchResults(searchValue);
+      const results = await this.getAutocompleteResults(searchValue);
       if (results.length) {
-        this.updateFromSearch(results[0]);
+        this.updateFromSearch(results[0].result);
+      } else {
+        this.autocompleteProvider?.start?.(searchValue);
       }
     }
   };
@@ -1100,10 +1102,12 @@ export default class LocationsMap {
   /**
    * get the results for the autocomplete dropdown
    */
-  protected getAutocompleteResults = async (): Promise<AutocompleteResult[]> => {
+  protected getAutocompleteResults = async (
+    searchValue: string = this.searchInput?.value || '',
+  ): Promise<AutocompleteResult[]> => {
     if (!this.searchInput) return [];
 
-    await this.getSearchResults(this.searchInput.value);
+    await this.getSearchResults(searchValue);
     let results = this.searchProvider?.getAutocompleteData() || [];
 
     // Limit the results only to those that have locations in the maxDistance area.

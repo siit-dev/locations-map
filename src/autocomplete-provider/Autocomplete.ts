@@ -60,9 +60,9 @@ export default class Autocomplete implements AutocompleteProvider {
 
     this.autocomplete = new autoComplete({
       data: {
-        src: async () => {
+        src: async (query?: string) => {
           try {
-            return await getResults();
+            return await getResults(query);
           } catch (_error) {
             return [];
           }
@@ -79,5 +79,9 @@ export default class Autocomplete implements AutocompleteProvider {
     });
 
     return this;
+  };
+
+  start = (query?: string): void => {
+    this.autocomplete?.start?.(query);
   };
 }
