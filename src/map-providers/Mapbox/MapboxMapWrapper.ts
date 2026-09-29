@@ -35,6 +35,7 @@ export interface MapboxPopupInstance {
   remove: () => this;
   setHTML: (html: string) => this;
   setLngLat: (lngLat: unknown) => this;
+  setOffset?: (offset?: unknown) => this;
   once: (type: string, listener: () => void) => this;
 }
 
@@ -171,13 +172,16 @@ export default class MapboxMapWrapper implements MapsWrapperInterface {
         popupSettings.offset = popupOffset;
       }
     }
-    this.infoWindow =
-      this.infoWindow ||
-      new this.mapboxgl.Popup({
+    if (this.infoWindow) {
+      // The popup is reused across markers, but its offset follows each marker's icon.
+      this.infoWindow.setOffset?.(popupSettings.offset);
+    } else {
+      this.infoWindow = new this.mapboxgl.Popup({
         closeButton: false,
         closeOnClick: false,
         ...popupSettings,
       });
+    }
 
     this.infoWindow
       .setLngLat(lngLat)

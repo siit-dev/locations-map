@@ -122,6 +122,10 @@ class MockPopup {
   });
   setHTML = jest.fn((_html: string) => this);
   setLngLat = jest.fn((_lngLat: any) => this);
+  setOffset = jest.fn((offset: any) => {
+    this.options.offset = offset;
+    return this;
+  });
   once = jest.fn((_type: string, listener: () => void) => {
     this.closeListener = listener;
     return this;
@@ -320,6 +324,25 @@ it('applies icon-aware popup offsets while preserving explicit popup settings', 
   await initialize(explicitOffsetWrapper);
   explicitOffsetWrapper.createMapMarker(makeMarker(2, 'Popup'));
   expect(MockPopup.instances[1].options.offset).toEqual([4, 5]);
+});
+
+it('re-offsets the reused tooltip popup for each marker icon', async () => {
+  const wrapper = new MapboxMapWrapper({
+    icon: (location: any) =>
+      location.id === 1
+        ? { url: '/small.svg', width: 24, height: 32, anchor: { x: 12, y: 32 } }
+        : { url: '/large.svg', width: 40, height: 60, anchor: { x: 20, y: 60 } },
+    mapboxgl,
+  });
+  await initialize(wrapper);
+
+  wrapper.displayMarkerTooltip(makeMarker(1), 'Small');
+  expect(MockPopup.instances[0].options.offset).toEqual([0, -16]);
+
+  wrapper.displayMarkerTooltip(makeMarker(2), 'Large');
+  expect(MockPopup.instances).toHaveLength(1);
+  expect(MockPopup.instances[0].setOffset).toHaveBeenLastCalledWith([0, -30]);
+  expect(MockPopup.instances[0].options.offset).toEqual([0, -30]);
 });
 
 it('keeps marker click, popup close, pan/zoom, and bounds behavior', async () => {
