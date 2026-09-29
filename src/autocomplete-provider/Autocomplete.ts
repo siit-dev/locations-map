@@ -1,4 +1,4 @@
-import { LocationsMap, AutocompleteProvider, AutocompleteSetupSettings } from '..';
+import { AutocompleteResult, LocationsMap, AutocompleteProvider, AutocompleteSetupSettings } from '..';
 import autoComplete from '@tarekraafat/autocomplete.js';
 import type { AutoCompleteConfig } from '../types/autocomplete-config';
 
@@ -38,6 +38,7 @@ export default class Autocomplete implements AutocompleteProvider {
   input: HTMLInputElement | null = null;
   autocomplete?: any = null;
   protected settings: Partial<AutoCompleteConfig>;
+  protected resultLoader?: AutocompleteSetupSettings['getResults'];
 
   constructor(settings: Partial<AutoCompleteConfig> = {}) {
     this.settings = {
@@ -52,6 +53,7 @@ export default class Autocomplete implements AutocompleteProvider {
   };
 
   setup = ({ getResults, input, onSelect }: AutocompleteSetupSettings): this => {
+    this.resultLoader = getResults;
     this.input = input;
     if (!this.input) {
       throw new Error('Autocomplete input is not defined');
@@ -61,9 +63,9 @@ export default class Autocomplete implements AutocompleteProvider {
 
     this.autocomplete = new autoComplete({
       data: {
-        src: async () => {
+        src: async (query?: string) => {
           try {
-            return await getResults();
+            return (await this.resultLoader?.(query)) || [];
           } catch (_error) {
             return [];
           }
@@ -80,5 +82,14 @@ export default class Autocomplete implements AutocompleteProvider {
     });
 
     return this;
+  };
+
+  getResults = async (query?: string): Promise<AutocompleteResult[]> => {
+    const normalizedQuery = this.settings.query && query !== undefined ? this.settings.query(query) : query;
+    return (await this.resultLoader?.(normalizedQuery)) || [];
+  };
+
+  start = (query?: string): void => {
+    this.autocomplete?.start?.(query);
   };
 }
