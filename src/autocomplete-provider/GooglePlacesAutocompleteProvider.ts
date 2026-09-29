@@ -79,6 +79,8 @@ export default class GooglePlacesAutocompleteProvider extends Autocomplete {
     this.removeAttribution();
     this.autocomplete?.unInit?.();
     this.cleanupInputListeners?.();
+    // The previous typing session ends with its input: start a fresh token, and drop its in-flight requests.
+    this.resetSession();
 
     this.input = setupInput;
     if (!this.input) {
@@ -122,12 +124,15 @@ export default class GooglePlacesAutocompleteProvider extends Autocomplete {
     };
     const resetOnBlur = () => this.resetSession();
     const resetOnFormReset = () => this.resetSession();
+    // Enter submits the form to the geocoder fallback without blurring the input, so blur alone misses it.
+    const resetOnFormSubmit = () => this.resetSession();
     const resetOnClear = () => this.resetSession();
     const hideAttribution = () => this.removeAttribution();
 
     input.addEventListener('input', resetIfEmpty);
     input.addEventListener('blur', resetOnBlur);
     form?.addEventListener('reset', resetOnFormReset);
+    form?.addEventListener('submit', resetOnFormSubmit);
     input.addEventListener('clear', resetOnClear);
     input.addEventListener('close', hideAttribution);
     this.cleanupInputListeners = () => {
@@ -135,6 +140,7 @@ export default class GooglePlacesAutocompleteProvider extends Autocomplete {
       input.removeEventListener('input', resetIfEmpty);
       input.removeEventListener('blur', resetOnBlur);
       form?.removeEventListener('reset', resetOnFormReset);
+      form?.removeEventListener('submit', resetOnFormSubmit);
       input.removeEventListener('clear', resetOnClear);
       input.removeEventListener('close', hideAttribution);
       this.removeAttribution();

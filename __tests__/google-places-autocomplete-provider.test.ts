@@ -157,6 +157,38 @@ it('reuses one session token while typing and rotates it after clear, reset, and
   expect(google.SessionToken).toHaveBeenCalledTimes(4);
 });
 
+it('rotates the session when Enter submits the form to the geocoder fallback', async () => {
+  const google = setupGoogle();
+  const { config, form } = setupProvider();
+  form.addEventListener('submit', event => event.preventDefault());
+
+  await config.data.src('Par');
+  form.dispatchEvent(new Event('submit', { cancelable: true }));
+  await config.data.src('Paris');
+
+  expect(google.SessionToken).toHaveBeenCalledTimes(2);
+});
+
+it('starts a fresh session on re-setup and drops the previous session’s in-flight suggestions', async () => {
+  const google = setupGoogle();
+  const pending: Array<(value: any) => void> = [];
+  google.fetchAutocompleteSuggestions.mockImplementationOnce(() => new Promise(resolve => pending.push(resolve)));
+  const { config: firstConfig, input, provider } = setupProvider();
+
+  const inFlight = firstConfig.data.src('Par');
+  await flushPromises();
+  provider.setup({ getResults: jest.fn(), input, onSelect: jest.fn() });
+  pending[0]({ suggestions: [{ placePrediction: makePrediction('Paris') }] });
+
+  await expect(inFlight).resolves.toEqual([]);
+  const secondConfig = autoCompleteMock.mock.calls[autoCompleteMock.mock.calls.length - 1][0];
+  await secondConfig.data.src('Lyon');
+  expect(google.SessionToken).toHaveBeenCalledTimes(2);
+  expect(google.fetchAutocompleteSuggestions.mock.calls[1][0].sessionToken).not.toBe(
+    google.fetchAutocompleteSuggestions.mock.calls[0][0].sessionToken,
+  );
+});
+
 it('rotates the session when autoComplete.js emits clear for Escape', async () => {
   const google = setupGoogle();
   const { config, input } = setupProvider();
@@ -181,6 +213,8 @@ it('uninitializes the previous autoComplete.js instance and avoids duplicate lis
 
   provider.setup(settings);
   provider.setup(settings);
+  // Each setup starts a fresh session itself; only the listeners are counted here.
+  resetSession.mockClear();
   input.dispatchEvent(new Event('clear'));
 
   expect(firstInstance.unInit).toHaveBeenCalledTimes(1);
