@@ -9,7 +9,7 @@
     "build:vite": "vite build",
     "build:esm": "node tools/cleanup esm && tsc -p config/tsconfig.esm.json && babel ./dist/esm -d ./dist/esm --config-file ./config/babel.config.esm.js && copyfiles -u 1 \"src/**/*.css\" dist/esm",
     "build:umd": "node tools/cleanup umd && webpack --config config/webpack.config.js",
-    "build:types": "node tools/cleanup types && copyfiles -u 1 \"src/**/*.d.ts\" dist/types && tsc -p config/tsconfig.types.json",
+    "build:types": "node tools/cleanup types && copyfiles -u 1 \"src/**/*.d.ts\" \"src/**/*.d.mts\" dist/types && tsc -p config/tsconfig.types.json",
     "test": "jest --config jestconfig.json --passWithNoTests",
     "format": "prettier --write \"src/**/*.ts\" \"**/*.md\"",
     "format:check": "prettier --list-different \"src/**/**.{js,ts}\" \"**/*.md\"",
@@ -62,6 +62,10 @@
     },
     "./GoogleMapsGeocoderProvider": {
       "import": "./dist/esm/search-providers/GoogleMapsGeocoderProvider.js"
+    },
+    "./GooglePlacesAutocompleteProvider": {
+      "types": "./dist/types/autocomplete-provider/GooglePlacesAutocompleteProvider.d.mts",
+      "import": "./dist/esm/autocomplete-provider/GooglePlacesAutocompleteProvider.js"
     },
     "./NominatimProvider": {
       "import": "./dist/esm/search-providers/NominatimProvider.js"

@@ -1,5 +1,6 @@
 import { AutocompleteResult, LocationsMap, AutocompleteProvider, AutocompleteSetupSettings } from '..';
-import autoComplete, { AutoCompleteConfig } from '@tarekraafat/autocomplete.js';
+import autoComplete from '@tarekraafat/autocomplete.js';
+import type { AutoCompleteConfig } from '../types/autocomplete-config';
 
 declare global {
   interface ElementEventMap {
@@ -27,7 +28,7 @@ export const defaultSettings: Partial<AutoCompleteConfig> = {
   },
   resultItem: {
     element: (source: HTMLElement, data: any) => {
-      source.innerHTML = `${data.value.title}`;
+      source.textContent = String(data.value.title);
     },
   },
 };

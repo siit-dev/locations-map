@@ -13,6 +13,8 @@ export { default as GoogleMapsClusteredWrapper } from './map-providers/GoogleMap
 export type { GoogleMapClusteredSettingsInterface } from './map-providers/GoogleMaps/GoogleMapsClusteredWrapper';
 
 export { default as GoogleMapsGeocoderProvider } from './search-providers/GoogleMapsGeocoderProvider';
+export { default as GooglePlacesAutocompleteProvider } from './autocomplete-provider/GooglePlacesAutocompleteProvider';
+export type { GooglePlacesAutocompleteProviderOptions } from './autocomplete-provider/GooglePlacesAutocompleteProvider';
 
 export { default as LeafletMapsWrapper, default as LeafletMapWrapper } from './map-providers/Leaflet/LeafletMapWrapper';
 export {

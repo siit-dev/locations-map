@@ -1,1 +1,11 @@
 @import '~@tarekraafat/autocomplete.js/dist/css/autoComplete.css';
+
+.locations-map-autocomplete-attribution {
+  border-top: 1px solid currentColor;
+  color: #666;
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.25;
+  padding: 0.5rem 1rem;
+  pointer-events: none;
+}

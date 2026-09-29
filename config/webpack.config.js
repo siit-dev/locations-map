@@ -9,7 +9,9 @@ const webpack = require('webpack');
 const makeConfig = () => {
   const isDev = process.env.NODE_ENV === 'development';
 
-  const plugins = [new webpack.EnvironmentPlugin({ NODE_ENV: 'production', MAPBOX_ACCESS_TOKEN: '' })];
+  const plugins = [
+    new webpack.EnvironmentPlugin({ NODE_ENV: 'production', MAPBOX_ACCESS_TOKEN: '', GOOGLE_MAPS_API_KEY: '' }),
+  ];
 
   if (isDev) {
     plugins.push(

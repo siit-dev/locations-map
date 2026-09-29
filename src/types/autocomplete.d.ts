@@ -1,39 +1,5 @@
 declare module '@tarekraafat/autocomplete.js' {
-  interface AutoCompleteConfig {
-    id?: number | string;
-    name?: string;
-    selector?: string | Function;
-    data: {
-      src: string[] | any[] | Function;
-      keys?: string[];
-      cache?: boolean;
-      filter?: Function;
-    };
-    trigger?: Function;
-    query?: Function;
-    placeHolder?: string;
-    threshold?: number;
-    debounce?: number;
-    wrapper?: boolean;
-    searchEngine?: string | Function;
-    diacritics?: boolean;
-    resultsList?: {
-      maxResults?: number;
-      tag?: string;
-      id?: string;
-      destination?: string;
-      position?: string;
-      noResults?: boolean;
-      element?: (list: HTMLElement, data: any) => void;
-    };
-    resultItem?: {
-      tag?: string;
-      class?: string;
-      highlight?: string;
-      selected?: string;
-      element: (item: HTMLElement, data: any) => void;
-    };
-  }
+  type AutoCompleteConfig = import('./autocomplete-config').AutoCompleteConfig;
 
   /**
    * @class autoComplete
@@ -83,6 +49,8 @@ declare module '@tarekraafat/autocomplete.js' {
    */
   export default function autoComplete(config: AutoCompleteConfig): void;
   export default class autoComplete {
+    unInit(): void;
+
     /**
      * @class autoComplete
      * @classdesc Creates a new instance of autoComplete.js with the given configuration.

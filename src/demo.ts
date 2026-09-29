@@ -1,6 +1,9 @@
 import {
   Autocomplete,
   AdvancedPagination,
+  GoogleMapsClusteredWrapper,
+  GoogleMapsGeocoderProvider,
+  GooglePlacesAutocompleteProvider,
   LeafletMapClusteredWrapper,
   LocationContainerSettings,
   LocationsMap,
@@ -244,8 +247,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   const searchParams = new URLSearchParams(window.location.search);
   const provider = searchParams.get('provider') || 'leaflet';
   const mapboxToken = searchParams.get('mapboxToken') || process.env.MAPBOX_ACCESS_TOKEN || '';
+  const googleMapsApiKey = searchParams.get('googleMapsApiKey') || process.env.GOOGLE_MAPS_API_KEY || '';
+  const isGooglePlacesDemo = provider === 'google-places';
 
-  let mapProvider: LocationContainerSettings['mapProvider'] = new LeafletMapClusteredWrapper();
+  let mapProvider: LocationContainerSettings['mapProvider'] = isGooglePlacesDemo
+    ? googleMapsApiKey
+      ? new GoogleMapsClusteredWrapper({ apiSettings: { apiKey: googleMapsApiKey } })
+      : null
+    : new LeafletMapClusteredWrapper();
+  if (isGooglePlacesDemo && !googleMapsApiKey) {
+    container.insertAdjacentHTML(
+      'afterbegin',
+      '<p class="locations-map-demo-error">Missing Google Maps API key. Add ?googleMapsApiKey=... or set GOOGLE_MAPS_API_KEY before starting the demo.</p>',
+    );
+    return;
+  }
+
   if (provider === 'mapbox' || provider === 'mapbox-clustered') {
     if (!mapboxToken) {
       container.insertAdjacentHTML(
@@ -274,7 +291,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // const searchProvider = new NominatimProvider();
-  const searchProvider = new FranceGovSearchProvider();
+  const searchProvider = isGooglePlacesDemo ? new GoogleMapsGeocoderProvider() : new FranceGovSearchProvider();
 
   // Switch pagination mode via ?paginationMode=infinite (or =scroll, =both) in the URL.
   const paginationModeParam = searchParams.get('paginationMode') ?? 'numbered';
@@ -297,7 +314,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       loadMoreText: 'Load more locations',
     }),
   });
-  const autocompleteProvider = new Autocomplete();
+  const autocompleteProvider = isGooglePlacesDemo
+    ? new GooglePlacesAutocompleteProvider({
+        includedRegionCodes: ['fr'],
+        includedPrimaryTypes: ['(regions)'],
+      })
+    : new Autocomplete();
 
   const locationsMapSettings: Partial<LocationContainerSettings> = {
     latitude: 47.8,
