@@ -21,12 +21,22 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+type LeafletMarkerWithSettings = L.Marker & {
+  originalSettings?: MapMarkerInterface;
+};
+
+type MarkerClickCallback = (marker: MapMarkerInterface) => void;
+
 export default class LeafletMapsWrapper implements MapsWrapperInterface {
   map?: L.Map;
-  mapMarkers?: L.Marker[] = [];
+  mapMarkers?: LeafletMarkerWithSettings[] = [];
   settings: MapSettingsInterface;
   infoWindow?: L.Popup;
   parent?: LocationsMap | null = null;
+  protected markerClickCallbacks = new Set<MarkerClickCallback>();
+  protected markerClickListeners = new WeakMap<L.Marker, Set<MarkerClickCallback>>();
+  protected markerListeners = new WeakMap<L.Marker, L.LeafletEventHandlerFn[]>();
+  protected markerPopups = new WeakMap<L.Marker, L.Popup>();
 
   constructor(settings: MapSettingsInterface = {}) {
     this.settings = settings;
@@ -42,12 +52,52 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
   }
 
   addMarkerClickCallback(callback: (marker: MapMarkerInterface) => void): this {
-    this.mapMarkers?.forEach(marker =>
-      marker.addEventListener('click', () => {
-        callback((marker as any)['originalSettings']);
-      }),
-    );
+    this.markerClickCallbacks.add(callback);
+    this.mapMarkers?.forEach(marker => this.attachMarkerClickCallback(marker, callback));
     return this;
+  }
+
+  protected attachMarkerClickCallback(marker: L.Marker, callback: MarkerClickCallback): void {
+    const callbacks = this.markerClickListeners.get(marker) || new Set<MarkerClickCallback>();
+    if (callbacks.has(callback)) {
+      return;
+    }
+
+    const listener: L.LeafletEventHandlerFn = () => {
+      const originalSettings = (marker as LeafletMarkerWithSettings).originalSettings;
+      if (originalSettings) {
+        callback(originalSettings);
+      }
+    };
+    this.addMarkerListener(marker, listener);
+    callbacks.add(callback);
+    this.markerClickListeners.set(marker, callbacks);
+  }
+
+  protected addMarkerListener(marker: L.Marker, listener: L.LeafletEventHandlerFn): void {
+    const listeners = this.markerListeners.get(marker) || [];
+    marker.on('click', listener);
+    listeners.push(listener);
+    this.markerListeners.set(marker, listeners);
+  }
+
+  protected removeMapMarkers(): void {
+    this.closeMarkerTooltip();
+    this.mapMarkers?.forEach(marker => {
+      this.markerListeners.get(marker)?.forEach(listener => marker.off('click', listener));
+      this.markerPopups.get(marker)?.remove();
+      marker.remove();
+    });
+    this.mapMarkers = [];
+  }
+
+  protected hasSameMarkerIdentity(
+    originalSettings: MapMarkerInterface | undefined,
+    marker: MapMarkerInterface,
+  ): boolean {
+    const originalId = originalSettings?.location?.id;
+    const markerId = marker.location?.id;
+    return originalId != null && markerId != null && originalId == markerId;
   }
 
   displayMarkerTooltip(marker: MapMarkerInterface, content: string): this {
@@ -107,7 +157,7 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
   createMapMarker(marker: MapMarkerInterface): L.Marker {
     const latitude = parseFloat(marker.latitude.toString());
     const longitude = parseFloat(marker.longitude.toString());
-    const mapMarker: L.Marker = new L.Marker([latitude, longitude]);
+    const mapMarker: LeafletMarkerWithSettings = new L.Marker([latitude, longitude]);
     const icon = this.getMarkerIcon(marker);
     if (icon) {
       mapMarker.setIcon(icon);
@@ -117,13 +167,14 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
     }
 
     mapMarker.addTo(this.map);
-    (mapMarker as any).originalSettings = marker;
+    mapMarker.originalSettings = marker;
     if (marker.popup) {
       const infoWindow: L.Popup = new L.Popup({
         offset: L.point(0, -1 * (this.getMarkerIconHeight(marker, true) || 20)),
       });
       infoWindow.setContent(marker.popup);
-      mapMarker.addEventListener('click', () => {
+      this.markerPopups.set(mapMarker, infoWindow);
+      this.addMarkerListener(mapMarker, () => {
         infoWindow.setLatLng([marker.latitude, marker.longitude]).openOn(this.map!);
         if (this.settings.icon) {
           const icon = this.getMarkerIcon(marker, true);
@@ -135,7 +186,11 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
   }
 
   addMapMarkers(markers: MapMarkerInterface[]): this {
+    this.removeMapMarkers();
     this.mapMarkers = markers.map(this.createMapMarker.bind(this));
+    this.mapMarkers.forEach(mapMarker => {
+      this.markerClickCallbacks.forEach(callback => this.attachMarkerClickCallback(mapMarker, callback));
+    });
     return this;
   }
 
@@ -256,7 +311,7 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
    */
   highlightMapMarker(marker: MapMarkerInterface): this {
     this.mapMarkers?.forEach(mapMarker => {
-      if ((mapMarker as any)['originalSettings'].location.id == marker.location?.id) {
+      if (this.hasSameMarkerIdentity(mapMarker.originalSettings, marker)) {
         if (this.settings.icon) {
           const icon = this.getMarkerIcon(marker, true);
           if (icon) mapMarker.setIcon(icon);
@@ -272,8 +327,10 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
   unhighlightMarkers(): this {
     if (this.settings.icon) {
       this.mapMarkers?.forEach(mapMarker => {
-        const icon = this.getMarkerIcon((mapMarker as any)['originalSettings']);
-        if (icon) mapMarker.setIcon(icon);
+        if (mapMarker.originalSettings) {
+          const icon = this.getMarkerIcon(mapMarker.originalSettings);
+          if (icon) mapMarker.setIcon(icon);
+        }
       });
     }
     return this;
@@ -281,8 +338,11 @@ export default class LeafletMapsWrapper implements MapsWrapperInterface {
 
   filterMarkers(callback: (marker: MapMarkerInterface) => boolean): this {
     this.mapMarkers?.forEach(mapMarker => {
-      const isVisible = callback((mapMarker as any)['originalSettings']);
-      mapMarker.setOpacity(isVisible ? 1 : 0);
+      const originalSettings = mapMarker.originalSettings;
+      if (originalSettings) {
+        const isVisible = callback(originalSettings);
+        mapMarker.setOpacity(isVisible ? 1 : 0);
+      }
     });
     return this;
   }

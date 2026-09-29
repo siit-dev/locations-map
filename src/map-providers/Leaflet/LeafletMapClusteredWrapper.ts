@@ -11,14 +11,27 @@ import ClusteredMapsWrapperInterface from '../ClusteredMapsWrapperInterface';
 export default class LeafletMapsClusteredWrapper extends LeafletMapsWrapper implements ClusteredMapsWrapperInterface {
   clusterer: MarkerClusterGroup | null = null;
 
+  protected removeClusterer(): void {
+    if (!this.clusterer) {
+      return;
+    }
+
+    this.clusterer.clearLayers();
+    if (this.map?.hasLayer(this.clusterer)) {
+      this.map.removeLayer(this.clusterer);
+    }
+    this.clusterer = null;
+  }
+
   addMapMarkers(markers: MapMarkerInterface[]): this {
+    this.removeClusterer();
     super.addMapMarkers(markers);
     if (!this.map) {
       throw new Error('Map not initialized');
     }
 
     // Add a marker clusterer to manage the markers.
-    this.clusterer = (L as any).markerClusterGroup(this.settings.clusterSettings || {});
+    this.clusterer = L.markerClusterGroup(this.settings.clusterSettings || {});
     this.mapMarkers?.forEach(mapMarker => {
       mapMarker.removeFrom(this.map!);
       this.clusterer?.addLayer(mapMarker);
@@ -30,7 +43,11 @@ export default class LeafletMapsClusteredWrapper extends LeafletMapsWrapper impl
 
   filterMarkers(callback: (marker: MapMarkerInterface) => boolean): this {
     this.mapMarkers?.forEach(mapMarker => {
-      const isVisible = callback((mapMarker as any)?.['originalSettings']);
+      const originalSettings = mapMarker.originalSettings;
+      if (!originalSettings) {
+        return;
+      }
+      const isVisible = callback(originalSettings);
       if (isVisible) {
         this.clusterer?.addLayer(mapMarker);
       } else {

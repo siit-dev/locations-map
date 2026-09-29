@@ -20,11 +20,27 @@ export default class GoogleMapsClusteredWrapper extends GoogleMapsWrapper implem
     }
   }
 
+  protected removeClusterer(): void {
+    if (!this.clusterer) {
+      return;
+    }
+
+    this.clusterer.clearMarkers();
+    this.clusterer.setMap(null);
+    this.clusterer = null;
+  }
+
   addMapMarkers(markers: MapMarkerInterface[]): this {
-    this.mapMarkers = markers.map(marker => this.createMapMarker(marker, true));
+    this.removeClusterer();
+    this.removeMapMarkers();
     if (!this.map) {
       throw new Error('Map not initialized');
     }
+
+    this.mapMarkers = markers.map(marker => this.createMapMarker(marker, true));
+    this.mapMarkers.forEach(mapMarker => {
+      this.markerClickCallbacks.forEach(callback => this.attachMarkerClickCallback(mapMarker, callback));
+    });
 
     // Add a marker clusterer to manage the markers.
     this.clusterer = new MarkerClusterer(this.map, this.mapMarkers, {

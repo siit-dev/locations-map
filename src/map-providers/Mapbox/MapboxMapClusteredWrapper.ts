@@ -7,12 +7,29 @@ import MapboxMapWrapper, {
   MapboxSettingsInterface,
 } from './MapboxMapWrapper';
 
-type MapboxClusterSettings = Record<string, any> & {
+/** GeoJSON source options supported by the clustered Mapbox wrapper. */
+export interface MapboxClusterSettingsInterface {
+  /** The wrapper always sends this as true; false is ignored in clustered mode. */
+  cluster?: boolean;
+  clusterRadius?: number;
+  clusterMaxZoom?: number;
+  clusterMinPoints?: number;
+  clusterProperties?: Record<string, any>;
+  maxzoom?: number;
+  minzoom?: number;
+  attribution?: string;
+  buffer?: number;
+  filter?: any[];
+  tolerance?: number;
+  lineMetrics?: boolean;
+  generateId?: boolean;
+  promoteId?: string | Record<string, string>;
+  dynamic?: boolean;
   clusterMarkerClassName?: string;
-};
+}
 
 export interface MapboxClusteredSettingsInterface extends MapboxSettingsInterface {
-  clusterSettings?: MapboxClusterSettings;
+  clusterSettings?: MapboxClusterSettingsInterface;
 }
 
 type LocationFeature = {
@@ -36,6 +53,8 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
   protected visibleClusterMarkers: Record<string, MapboxMarkerInstance> = {};
   protected visiblePointMarkers: Record<string, MapboxMarkerInstance> = {};
   protected visibleMarkerFilter: (marker: MapMarkerInterface) => boolean = () => true;
+  protected clusterSetupPending = false;
+  protected clusterListenersRegistered = false;
 
   constructor(settings: MapboxClusteredSettingsInterface) {
     super(settings);
@@ -43,7 +62,14 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
   }
 
   addMapMarkers(markers: MapMarkerInterface[]): this {
+    // Visible point markers are also the managed markers owned by the base
+    // wrapper. Let its cleanup remove those exactly once.
+    this.clearVisibleMarkers(false);
+    this.removeMapMarkers();
     this.mapMarkers = markers.map(marker => this.createMapMarker(marker, true));
+    this.mapMarkers.forEach(mapMarker => {
+      this.markerClickCallbacks.forEach(callback => this.attachMarkerClickCallback(mapMarker, callback));
+    });
     this.setupClusterSourceWhenReady();
     return this;
   }
@@ -54,17 +80,48 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
     return this;
   }
 
+  protected clearAdditionalMarkers(): void {
+    Object.values(this.visibleClusterMarkers).forEach(marker => marker.remove());
+    this.visibleClusterMarkers = {};
+    this.visiblePointMarkers = {};
+    this.clusterer = null;
+    this.clusterSetupPending = false;
+    this.clusterListenersRegistered = false;
+  }
+
+  protected clearVisibleMarkers(removePointMarkers: boolean = true): void {
+    Object.values(this.visibleClusterMarkers).forEach(marker => marker.remove());
+    if (removePointMarkers) {
+      Object.values(this.visiblePointMarkers).forEach(marker => marker.remove());
+    }
+    this.visibleClusterMarkers = {};
+    this.visiblePointMarkers = {};
+  }
+
   protected setupClusterSourceWhenReady(): void {
     if (!this.map) {
       throw new Error('Map not initialized');
     }
 
-    if ((this.map as any).isStyleLoaded && (this.map as any).isStyleLoaded()) {
+    if (this.clusterSetupPending) {
+      return;
+    }
+
+    if (this.map.getSource(this.sourceId)) {
       this.setupClusterSource();
       return;
     }
 
-    this.map.once('load', () => this.setupClusterSource());
+    if (this.map.isStyleLoaded?.()) {
+      this.setupClusterSource();
+      return;
+    }
+
+    this.clusterSetupPending = true;
+    this.addMapOnceListener('load', () => {
+      this.clusterSetupPending = false;
+      this.setupClusterSource();
+    });
   }
 
   protected setupClusterSource(): void {
@@ -72,23 +129,34 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
       throw new Error('Map not initialized');
     }
 
-    if (!this.map.getSource(this.sourceId)) {
+    const existingSource = this.map.getSource(this.sourceId) as MapboxGeoJSONSource | undefined;
+    const sourceUpdated = !!existingSource;
+    if (!existingSource) {
       const clusterSettings = this.settings.clusterSettings || {};
       this.map.addSource(this.sourceId, {
         type: 'geojson',
         data: this.getFeatureCollection(),
-        cluster: true,
         clusterRadius: 50,
         clusterMaxZoom: 14,
         ...this.getSupportedClusterSettings(clusterSettings),
+        // A clustered wrapper must remain clustered even when copied source
+        // settings contain `cluster: false`.
+        cluster: true,
       });
+    } else {
+      existingSource.setData(this.getFeatureCollection());
     }
 
-    this.clusterer = this.map.getSource(this.sourceId) as MapboxGeoJSONSource;
+    this.clusterer = (this.map.getSource(this.sourceId) || existingSource) as MapboxGeoJSONSource;
     this.addHelperLayers();
-    this.map.on('moveend', this.renderVisibleMarkers);
-    this.map.on('sourcedata', this.renderVisibleMarkers);
-    this.renderVisibleMarkers();
+    if (!this.clusterListenersRegistered) {
+      this.addMapListener('moveend', this.renderVisibleMarkers);
+      this.addMapListener('sourcedata', this.renderVisibleMarkers);
+      this.clusterListenersRegistered = true;
+    }
+    if (!sourceUpdated) {
+      this.renderVisibleMarkers();
+    }
   }
 
   protected addHelperLayers(): void {
@@ -123,8 +191,8 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
     }
   }
 
-  protected getSupportedClusterSettings(clusterSettings: MapboxClusterSettings): Record<string, any> {
-    const { cluster, clusterRadius, clusterMaxZoom, clusterMinPoints, clusterProperties } = clusterSettings;
+  protected getSupportedClusterSettings(clusterSettings: MapboxClusterSettingsInterface): Record<string, any> {
+    const { clusterRadius, clusterMaxZoom, clusterMinPoints, clusterProperties } = clusterSettings;
     const sourceSettings: Record<string, any> = {};
     const supportedSourceKeys = [
       'maxzoom',
@@ -140,14 +208,14 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
     ];
 
     supportedSourceKeys.forEach(key => {
-      if (clusterSettings[key] !== undefined) {
-        (sourceSettings as any)[key] = clusterSettings[key];
+      const value = clusterSettings[key as keyof MapboxClusterSettingsInterface];
+      if (value !== undefined) {
+        sourceSettings[key] = value;
       }
     });
 
     return {
       ...sourceSettings,
-      ...(cluster !== undefined ? { cluster } : {}),
       ...(clusterRadius !== undefined ? { clusterRadius } : {}),
       ...(clusterMaxZoom !== undefined ? { clusterMaxZoom } : {}),
       ...(clusterMinPoints !== undefined ? { clusterMinPoints } : {}),
@@ -161,13 +229,8 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
     }
 
     this.closeMarkerTooltip();
-    Object.values(this.visibleClusterMarkers).forEach(marker => marker.remove());
-    this.visibleClusterMarkers = {};
-    Object.values(this.visiblePointMarkers).forEach(marker => marker.remove());
-    this.visiblePointMarkers = {};
-
+    this.clearVisibleMarkers();
     this.clusterer.setData(this.getFeatureCollection());
-    this.renderVisibleMarkers();
   }
 
   protected getFeatureCollection(): {
@@ -176,8 +239,8 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
   } {
     const features = (this.mapMarkers || [])
       .map((mapMarker, markerIndex): LocationFeature | null => {
-        const originalSettings = (mapMarker as any)['originalSettings'] as MapMarkerInterface;
-        if (!this.visibleMarkerFilter(originalSettings) || !originalSettings.location) {
+        const originalSettings = mapMarker.originalSettings;
+        if (!originalSettings || !this.visibleMarkerFilter(originalSettings) || !originalSettings.location) {
           return null;
         }
 
@@ -211,7 +274,9 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
 
     const visibleClusterMarkers: Record<string, MapboxMarkerInstance> = {};
     const visiblePointMarkers: Record<string, MapboxMarkerInstance> = {};
-    const features = this.map.querySourceFeatures(this.sourceId);
+    const seenClusterKeys = new Set<string>();
+    const seenPointKeys = new Set<string>();
+    const features = this.map.querySourceFeatures(this.sourceId) || [];
 
     features.forEach(feature => {
       if (!feature.geometry || feature.geometry.type !== 'Point') {
@@ -219,16 +284,26 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
       }
 
       if (feature.properties?.cluster) {
+        const key = this.getClusterKey(feature);
+        if (seenClusterKeys.has(key)) {
+          return;
+        }
+        seenClusterKeys.add(key);
         const marker = this.getVisibleClusterMarker(feature);
         if (marker) {
-          visibleClusterMarkers[this.getClusterKey(feature)] = marker;
+          visibleClusterMarkers[key] = marker;
         }
         return;
       }
 
+      const key = this.getPointKey(feature);
+      if (seenPointKeys.has(key)) {
+        return;
+      }
+      seenPointKeys.add(key);
       const marker = this.getVisiblePointMarker(feature);
       if (marker) {
-        visiblePointMarkers[this.getPointKey(feature)] = marker;
+        visiblePointMarkers[key] = marker;
       }
     });
 
@@ -255,6 +330,7 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
     const key = this.getClusterKey(feature);
     const existingMarker = this.visibleClusterMarkers[key];
     if (existingMarker) {
+      existingMarker.setLngLat(feature.geometry.coordinates as [number, number]);
       return existingMarker;
     }
 
@@ -286,6 +362,11 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
       return null;
     }
 
+    const originalSettings = marker.originalSettings;
+    if (!originalSettings || !this.visibleMarkerFilter(originalSettings)) {
+      return null;
+    }
+
     const key = this.getPointKey(feature);
     const existingMarker = this.visiblePointMarkers[key];
     if (existingMarker) {
@@ -293,28 +374,32 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
     }
 
     marker.addTo(this.map);
-    marker.getElement().style.display = 'block';
+    this.restoreMarkerDisplay(marker);
     return marker;
   }
 
   protected createClusterElement(pointCount: string | number): HTMLElement {
+    const customClassName = this.settings.clusterSettings?.clusterMarkerClassName;
     const element = document.createElement('button');
     element.type = 'button';
-    element.className = this.settings.clusterSettings?.clusterMarkerClassName || 'locations-mapbox-cluster';
+    element.className = customClassName || 'locations-mapbox-cluster';
     element.textContent = pointCount.toString();
-    element.style.alignItems = 'center';
-    element.style.background = '#1976d2';
-    element.style.border = '2px solid #ffffff';
-    element.style.borderRadius = '50%';
-    element.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.35)';
-    element.style.color = '#ffffff';
-    element.style.cursor = 'pointer';
-    element.style.display = 'flex';
-    element.style.font = '600 12px/1 sans-serif';
-    element.style.height = '36px';
-    element.style.justifyContent = 'center';
-    element.style.padding = '0';
-    element.style.width = '36px';
+
+    if (!customClassName) {
+      element.style.alignItems = 'center';
+      element.style.background = '#1976d2';
+      element.style.border = '2px solid #ffffff';
+      element.style.borderRadius = '50%';
+      element.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.35)';
+      element.style.color = '#ffffff';
+      element.style.cursor = 'pointer';
+      element.style.display = 'flex';
+      element.style.font = '600 12px/1 sans-serif';
+      element.style.height = '36px';
+      element.style.justifyContent = 'center';
+      element.style.padding = '0';
+      element.style.width = '36px';
+    }
     return element;
   }
 
@@ -341,6 +426,9 @@ export default class MapboxMapClusteredWrapper extends MapboxMapWrapper implemen
   }
 
   protected getPointKey(feature: MapboxGeoJSONFeature): string {
-    return `point-${feature.properties?.locationId}`;
+    const markerIndex = feature.properties?.markerIndex;
+    return markerIndex === undefined
+      ? `point-${feature.properties?.locationId}`
+      : `point-${feature.properties?.locationId}-${markerIndex}`;
   }
 }
